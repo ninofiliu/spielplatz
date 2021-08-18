@@ -15,3 +15,5 @@ rules:
   max-len: off
   no-plusplus: off
   no-restricted-syntax: off
+  import/no-unresolved: off
+  import/extensions: off
