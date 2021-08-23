@@ -17,3 +17,10 @@ rules:
   no-restricted-syntax: off
   import/no-unresolved: off
   import/extensions: off
+  no-await-in-loop: off
+  no-loop-func: off
+  no-bitwise: off
+  no-mixed-operators: off
+  no-continue: off
+  no-unused-vars: off
+  '@typescript-eslint/no-unused-vars': error

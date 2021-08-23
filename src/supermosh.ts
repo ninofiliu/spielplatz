@@ -121,6 +121,31 @@ export const approximate = (previous: ImageData, shift: Shift): ImageData => {
   return out;
 };
 
+export const approximateSmooth = (previous: ImageData, shift: Shift): ImageData => {
+  const { width, height } = previous;
+  const out = new ImageData(width, height);
+
+  for (let i = 3; i < out.data.length; i += 4) {
+    out.data[i] = 255;
+  }
+
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      const blockXLeft = config.size * ~~(x / config.size);
+      const blockYLeft = config.size * ~~(y / config.size);
+      const xsrc = (x + shift[blockXLeft][blockYLeft].x + width) % width;
+      const ysrc = (y + shift[blockXLeft][blockYLeft].y + height) % height;
+      const isrc = 4 * (width * ysrc + xsrc);
+      const idst = 4 * (width * y + x);
+      out.data[idst + 0] = previous.data[isrc + 0];
+      out.data[idst + 1] = previous.data[isrc + 1];
+      out.data[idst + 2] = previous.data[isrc + 2];
+    }
+  }
+
+  return out;
+};
+
 export const elementEvent = (element: HTMLElement, eventName: string) => new Promise((resolve) => {
   element.addEventListener(eventName, resolve, { once: true });
 });
