@@ -1,7 +1,9 @@
 type Shift = {
   data: Int8Array;
-  get(x: number, y: number): number;
-  set(x: number, y: number, value: number): void;
+  getX(x: number, y: number): number;
+  setX(x: number, y: number, value: number): void;
+  getY(x: number, y: number): number;
+  setY(x: number, y: number, value: number): void;
 }
 type BaseSegment = {
   src: string;
@@ -34,16 +36,19 @@ export type PreparedSegment = PreparedCopySegment | PreparedGlideSegment | Prepa
 export const config = {
   fps: 30,
   size: 16,
-  xyShifts: [0, 1, -1, 2, -2, 4, -4, 8, -8],
+  // xyShifts: [0, 1, -1, 2, -2, 3, -3, 4, -4],
+  xyShifts: Array(8).fill(null).flatMap((_, i) => [i, -i]).slice(1),
 };
 
 const createShift = (w: number, h: number): Shift => {
-  const getIndex = (x: number, y: number) => y * w + x;
-  const data = new Int8Array(w * h);
+  const getIndex = (x: number, y: number) => 2 * (y * w + x);
+  const data = new Int8Array(2 * w * h);
   return {
     data,
-    get: (x, y) => data[getIndex(x, y)],
-    set: (x, y, value) => { data[getIndex(x, y)] = value; },
+    getX: (x, y) => data[getIndex(x, y)],
+    setX: (x, y, value) => { data[getIndex(x, y)] = value; },
+    getY: (x, y) => data[getIndex(x, y) + 1],
+    setY: (x, y, value) => { data[getIndex(x, y) + 1] = value; },
   };
 };
 
@@ -53,10 +58,8 @@ export const getShift = (previous: ImageData, current: ImageData) => {
 
   for (let xi = 0; xi < width / config.size; xi++) {
     const xOffset = xi * config.size;
-    if (!shift[xOffset]) shift[xOffset] = [];
     for (let yi = 0; yi < height / config.size; yi++) {
       const yOffset = yi * config.size;
-      if (!shift[xOffset][yOffset]) shift[xOffset][yOffset] = { x: NaN, y: NaN };
 
       const xMax = Math.min(xOffset + config.size, width);
       const yMax = Math.min(yOffset + config.size, height);
@@ -80,8 +83,8 @@ export const getShift = (previous: ImageData, current: ImageData) => {
 
           if (diff < minDiff) {
             minDiff = diff;
-            shift[xOffset][yOffset].x = xShift;
-            shift[xOffset][yOffset].y = yShift;
+            shift.setX(xi, yi, xShift);
+            shift.setY(xi, yi, yShift);
           }
         }
       }
@@ -131,15 +134,25 @@ export const approximateSmooth = (previous: ImageData, shift: Shift): ImageData 
 
   for (let x = 0; x < width; x++) {
     for (let y = 0; y < height; y++) {
-      const blockXLeft = config.size * ~~(x / config.size);
-      const blockYLeft = config.size * ~~(y / config.size);
-      const xsrc = (x + shift[blockXLeft][blockYLeft].x + width) % width;
-      const ysrc = (y + shift[blockXLeft][blockYLeft].y + height) % height;
-      const isrc = 4 * (width * ysrc + xsrc);
-      const idst = 4 * (width * y + x);
-      out.data[idst + 0] = previous.data[isrc + 0];
-      out.data[idst + 1] = previous.data[isrc + 1];
-      out.data[idst + 2] = previous.data[isrc + 2];
+      const blockXLeft = ~~(x / config.size);
+      const blockXRight = (blockXLeft + 1) % ~~(width / config.size);
+      const blockYTop = ~~(y / config.size);
+      const blockYBottom = (blockYTop + 1) % ~~(width / config.size);
+      const xWeightLeft = (x % config.size) / config.size;
+      const xWeightRight = 1 - xWeightLeft;
+      const yWeightTop = (y % config.size) / config.size;
+      const yWeightBottom = 1 - yWeightTop;
+      for (const [blockX, xWeight] of [[blockXLeft, xWeightLeft], [blockXRight, xWeightRight]]) {
+        for (const [blockY, yWeight] of [[blockYTop, yWeightTop], [blockYBottom, yWeightBottom]]) {
+          const xsrc = (x + shift.getX(blockX, blockY) + width) % width;
+          const ysrc = (y + shift.getY(blockX, blockY) + height) % height;
+          const isrc = 4 * (width * ysrc + xsrc);
+          const idst = 4 * (width * y + x);
+          for (let di = 0; di < 3; di++) {
+            out.data[idst + di] += xWeight * yWeight * previous.data[isrc + di];
+          }
+        }
+      }
     }
   }
 

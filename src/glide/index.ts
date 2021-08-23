@@ -2,9 +2,18 @@ import { approximateSmooth, getShift } from '../supermosh';
 
 (async () => {
   const video = document.createElement('video');
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  const { width, height } = await stream.getVideoTracks()[0].getSettings();
-  video.srcObject = stream;
+  video.muted = true;
+  // video.autoplay = true;
+
+  video.src = '/baby-05.webm';
+  await new Promise((r) => video.addEventListener('canplaythrough', r, { once: true }));
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+
+  // const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  // const { width, height } = await stream.getVideoTracks()[0].getSettings();
+  // video.srcObject = stream;
+
   video.play();
   document.body.append(video);
 
