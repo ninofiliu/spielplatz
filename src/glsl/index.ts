@@ -61,11 +61,42 @@ const createProgram = async () => {
     -1, 1,
     1, 1,
   ]), gl.STATIC_DRAW);
+
+  let nbFrame = 0;
+  setInterval(() => {
+    console.log(`fps: ${nbFrame}`);
+    nbFrame = 0;
+  }, 1000);
   const loop = () => {
+    const now = performance.now();
     gl.uniform2f(locations.u_mouse, mouse.x, mouse.y);
-    gl.uniform1f(locations.u_now, performance.now());
+    gl.uniform1f(locations.u_now, now);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     requestAnimationFrame(loop);
+    nbFrame++;
   };
   loop();
+
+  const stream = canvas.captureStream();
+  const recorder = new MediaRecorder(stream);
+  document.addEventListener('keypress', (evt) => {
+    if (evt.key !== 'r') return;
+    if (recorder.state === 'recording') {
+      recorder.stop();
+    } else {
+      recorder.start();
+    }
+  });
+  recorder.addEventListener('dataavailable', (evt) => {
+    const url = URL.createObjectURL(evt.data);
+    const video = document.createElement('video');
+    video.style.position = 'fixed';
+    video.style.inset = '0 0 0 0';
+    video.autoplay = true;
+    video.muted = true;
+    video.loop = true;
+    video.src = url;
+    video.controls = true;
+    document.body.append(video);
+  });
 })();
