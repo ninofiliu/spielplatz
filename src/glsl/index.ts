@@ -38,15 +38,21 @@ const createProgram = async () => {
 };
 
 (async () => {
+  const mouse = { x: 0, y: 0 };
+  document.addEventListener('mousemove', (evt) => {
+    mouse.x = -1 + 2 * evt.pageX / window.innerWidth;
+    mouse.y = 1 - 2 * evt.pageY / window.innerHeight;
+  });
   const program = await createProgram();
 
   const locations = {
     a_position: gl.getAttribLocation(program, 'a_position'),
+    u_mouse: gl.getUniformLocation(program, 'u_mouse'),
+    u_now: gl.getUniformLocation(program, 'u_now'),
   };
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.enableVertexAttribArray(locations.a_position);
   gl.vertexAttribPointer(locations.a_position, 2, gl.FLOAT, false, 0, 0);
-
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
     -1, -1,
     -1, 1,
@@ -55,5 +61,11 @@ const createProgram = async () => {
     -1, 1,
     1, 1,
   ]), gl.STATIC_DRAW);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  const loop = () => {
+    gl.uniform2f(locations.u_mouse, mouse.x, mouse.y);
+    gl.uniform1f(locations.u_now, performance.now());
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    requestAnimationFrame(loop);
+  };
+  loop();
 })();
