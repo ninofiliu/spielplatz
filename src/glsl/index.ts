@@ -8,7 +8,7 @@ canvas.width = width;
 canvas.height = height;
 document.body.append(canvas);
 
-const gl = canvas.getContext('webgl');
+const gl = canvas.getContext('webgl2');
 
 const createShader = async (type, url) => {
   const resp = await fetch(url);
