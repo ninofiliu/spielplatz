@@ -1,7 +1,6 @@
-attribute vec4 a_position;
-varying vec4 v_position;
+#version 300 es
+in vec4 a_position;
 
-void main () {
+void main() {
   gl_Position = a_position;
-  v_position = 0.5 + 0.5 * a_position;
 }
