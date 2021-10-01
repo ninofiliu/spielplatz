@@ -25,7 +25,7 @@ const createProgram = async (gl: WebGL2RenderingContext) => {
   return program;
 };
 
-const getCroppedImage = async (src: string, width: number, height: number) => {
+const getCroppedImage = async (src: string, width: number, height: number, blur: number) => {
   const image = new Image();
   image.src = src;
   await new Promise((r) => { image.onload = r; });
@@ -33,6 +33,7 @@ const getCroppedImage = async (src: string, width: number, height: number) => {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
+  ctx.filter = `blur(${blur}px)`;
   if (image.width / image.height > width / height) {
     const sw = image.height * width / height;
     const sx = (image.width - sw) / 2;
@@ -42,6 +43,7 @@ const getCroppedImage = async (src: string, width: number, height: number) => {
     const sy = (image.height - sh) / 2;
     ctx.drawImage(image, 0, sy, image.width, sh, 0, 0, width, height);
   }
+  ctx.filter = '';
   return ctx.getImageData(0, 0, width, height);
 };
 
@@ -76,7 +78,7 @@ const getCroppedImage = async (src: string, width: number, height: number) => {
   gl.enableVertexAttribArray(locations.position);
   gl.vertexAttribPointer(locations.position, 2, gl.FLOAT, false, 0, 0);
 
-  const imageData = await getCroppedImage('/static/0.jpg', width, height);
+  const imageData = await getCroppedImage('/static/3.jpg', width, height, 0);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -86,10 +88,7 @@ const getCroppedImage = async (src: string, width: number, height: number) => {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
   gl.uniform1i(locations.image, 0);
 
-  const offsetsData = new ImageData(width, height);
-  offsetsData.data.forEach((_, i) => {
-    offsetsData.data[i] = 256 * i / offsetsData.data.length;
-  });
+  const offsetsData = await getCroppedImage('/static/3.jpg', width, height, width / 40);
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
