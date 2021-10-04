@@ -51,6 +51,21 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   return ctx.getImageData(0, 0, width, height);
 };
 
+const addTexture = (gl: WebGL2RenderingContext, nb: number, location: WebGLUniformLocation) => {
+  gl.activeTexture(gl.TEXTURE0 + nb);
+  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.uniform1i(location, nb);
+};
+
+const setTextureImage = (gl: WebGL2RenderingContext, nb: number, source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement) => {
+  gl.activeTexture(gl.TEXTURE0 + nb);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+};
+
 (async () => {
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -92,27 +107,17 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   gl.enableVertexAttribArray(locations.position);
   gl.vertexAttribPointer(locations.position, 2, gl.FLOAT, false, 0, 0);
 
+  addTexture(gl, 0, locations.image);
   const srcImageData = crop(srcImage, width, height, 0);
-  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcImageData);
-  gl.uniform1i(locations.image, 0);
+  setTextureImage(gl, 0, srcImageData);
+
+  addTexture(gl, 1, locations.offsets);
 
   const loop = () => {
     gl.uniform2f(locations.mouse, mouse.x, mouse.y);
 
     const offsetsImageData = crop(offsetsImage, width, height, 0.1 * height * (0.5 + 0.5 * mouse.y));
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offsetsImageData);
-    gl.uniform1i(locations.offsets, 1);
+    setTextureImage(gl, 1, offsetsImageData);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     requestAnimationFrame(loop);
