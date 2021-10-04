@@ -2,6 +2,7 @@
 precision highp float;
 uniform sampler2D u_image;
 uniform sampler2D u_offsets;
+uniform vec2 u_mouse;
 in vec2 v_position;
 out vec4 color;
 
@@ -9,6 +10,7 @@ const float pi = 3.14159;
 const float force = 2.0;
   
 void main() {
+  float force = 10.0*(0.5+0.5*u_mouse.x);
   vec2 t = vec2(
     0.5+0.5*v_position.x,
     0.5-0.5*v_position.y
