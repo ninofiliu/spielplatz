@@ -82,8 +82,17 @@ const setTextureImage = (gl: WebGL2RenderingContext, nb: number, source: ImageBi
     mouse.y = 1 - 2 * evt.pageY / height;
   });
 
-  const srcImage = await loadImage('/static/faces/10.jpg');
-  const offsetsImage = await loadImage('/static/faces/8.jpg');
+  const wheel = {
+    x: 0,
+    y: 0,
+  };
+  document.addEventListener('wheel', (evt) => {
+    wheel.x += evt.deltaX;
+    wheel.y += evt.deltaY;
+  });
+
+  const srcImage = await loadImage('/static/faces/1.jpg');
+  const offsetsImage = await loadImage('/static/faces/1.jpg');
 
   const gl = canvas.getContext('webgl2');
   const program = await createProgram(gl);
@@ -113,10 +122,13 @@ const setTextureImage = (gl: WebGL2RenderingContext, nb: number, source: ImageBi
 
   addTexture(gl, 1, locations.offsets);
 
+  const start = performance.now();
   const loop = () => {
-    gl.uniform2f(locations.mouse, mouse.x, mouse.y);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), performance.now() - start);
+    gl.uniform2f(gl.getUniformLocation(program, 'u_mouse'), mouse.x, mouse.y);
+    gl.uniform2f(gl.getUniformLocation(program, 'u_wheel'), wheel.x, wheel.y);
 
-    const offsetsImageData = crop(offsetsImage, width, height, 0.1 * height * (0.5 + 0.5 * mouse.y));
+    const offsetsImageData = crop(offsetsImage, width, height, Math.max(0, wheel.x));
     setTextureImage(gl, 1, offsetsImageData);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
