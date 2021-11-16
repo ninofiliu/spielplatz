@@ -1,6 +1,7 @@
 const CIRCLE_SHIFT = 50;
 const CIRCLE_SIZE = 50;
-const MARGIN = 100;
+const MARGIN = 50;
+const NB_LINES = 4;
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -15,8 +16,6 @@ document.body.append(canvas);
 const ctx = canvas.getContext('2d');
 ctx.fillStyle = 'black';
 ctx.fillRect(0, 0, width, height);
-
-const id = ctx.getImageData(0, 0, width, height);
 
 function* pixels() {
   for (let x = 0; x < width; x++) {
@@ -43,8 +42,8 @@ for (let i = 0; i < 200; i++) {
   });
 }
 
-(async () => {
-  // draw circle cloud
+const cloud = async () => {
+  const id = ctx.getImageData(0, 0, width, height);
   for (let ci = 0; ci < circles.length; ci++) {
     const circle = circles[ci];
     const minx = ~~Math.max(0, circle.x - circle.r);
@@ -65,8 +64,23 @@ for (let i = 0; i < 200; i++) {
       await new Promise((r) => requestAnimationFrame(r));
     }
   }
+};
 
-  // mirror
+const lines = async () => {
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 0.1;
+  for (let i = 0; i < circles.length - NB_LINES - 1; i++) {
+    for (let j = i + 1; j < i + NB_LINES + 1; j++) {
+      ctx.moveTo(circles[i].x, circles[i].y);
+      ctx.lineTo(circles[j].x, circles[j].y);
+      ctx.stroke();
+    }
+    await new Promise((r) => requestAnimationFrame(r));
+  }
+};
+
+const mirror = () => {
+  const id = ctx.getImageData(0, 0, width, height);
   for (const { x, y, i } of pixels()) {
     if (x > width / 2) continue;
     const ileft = i;
@@ -77,6 +91,11 @@ for (let i = 0; i < 200; i++) {
       id.data[iright + c] = v;
     }
   }
-
   ctx.putImageData(id, 0, 0);
+};
+
+(async () => {
+  await cloud();
+  await lines();
+  mirror();
 })();
