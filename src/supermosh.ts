@@ -1,9 +1,7 @@
 type Shift = {
   data: Int8Array;
-  getX(x: number, y: number): number;
-  setX(x: number, y: number, value: number): void;
-  getY(x: number, y: number): number;
-  setY(x: number, y: number, value: number): void;
+  get(x: number, y: number): number;
+  set(x: number, y: number, value: number): void;
 }
 type BaseSegment = {
   src: string;
@@ -36,19 +34,16 @@ export type PreparedSegment = PreparedCopySegment | PreparedGlideSegment | Prepa
 export const config = {
   fps: 30,
   size: 16,
-  // xyShifts: [0, 1, -1, 2, -2, 3, -3, 4, -4],
-  xyShifts: Array(8).fill(null).flatMap((_, i) => [i, -i]).slice(1),
+  xyShifts: [0, 1, -1, 2, -2, 4, -4, 8, -8],
 };
 
 const createShift = (w: number, h: number): Shift => {
-  const getIndex = (x: number, y: number) => 2 * (y * w + x);
-  const data = new Int8Array(2 * w * h);
+  const getIndex = (x: number, y: number) => y * w + x;
+  const data = new Int8Array(w * h);
   return {
     data,
-    getX: (x, y) => data[getIndex(x, y)],
-    setX: (x, y, value) => { data[getIndex(x, y)] = value; },
-    getY: (x, y) => data[getIndex(x, y) + 1],
-    setY: (x, y, value) => { data[getIndex(x, y) + 1] = value; },
+    get: (x, y) => data[getIndex(x, y)],
+    set: (x, y, value) => { data[getIndex(x, y)] = value; },
   };
 };
 
@@ -58,8 +53,10 @@ export const getShift = (previous: ImageData, current: ImageData) => {
 
   for (let xi = 0; xi < width / config.size; xi++) {
     const xOffset = xi * config.size;
+    if (!shift[xOffset]) shift[xOffset] = [];
     for (let yi = 0; yi < height / config.size; yi++) {
       const yOffset = yi * config.size;
+      if (!shift[xOffset][yOffset]) shift[xOffset][yOffset] = { x: NaN, y: NaN };
 
       const xMax = Math.min(xOffset + config.size, width);
       const yMax = Math.min(yOffset + config.size, height);
@@ -83,8 +80,8 @@ export const getShift = (previous: ImageData, current: ImageData) => {
 
           if (diff < minDiff) {
             minDiff = diff;
-            shift.setX(xi, yi, xShift);
-            shift.setY(xi, yi, yShift);
+            shift[xOffset][yOffset].x = xShift;
+            shift[xOffset][yOffset].y = yShift;
           }
         }
       }
@@ -124,41 +121,6 @@ export const approximate = (previous: ImageData, shift: Shift): ImageData => {
   return out;
 };
 
-export const approximateSmooth = (previous: ImageData, shift: Shift): ImageData => {
-  const { width, height } = previous;
-  const out = new ImageData(width, height);
-
-  for (let i = 3; i < out.data.length; i += 4) {
-    out.data[i] = 255;
-  }
-
-  for (let x = 0; x < width; x++) {
-    for (let y = 0; y < height; y++) {
-      const blockXLeft = ~~(x / config.size);
-      const blockXRight = (blockXLeft + 1) % ~~(width / config.size);
-      const blockYTop = ~~(y / config.size);
-      const blockYBottom = (blockYTop + 1) % ~~(width / config.size);
-      const xWeightLeft = (x % config.size) / config.size;
-      const xWeightRight = 1 - xWeightLeft;
-      const yWeightTop = (y % config.size) / config.size;
-      const yWeightBottom = 1 - yWeightTop;
-      for (const [blockX, xWeight] of [[blockXLeft, xWeightLeft], [blockXRight, xWeightRight]]) {
-        for (const [blockY, yWeight] of [[blockYTop, yWeightTop], [blockYBottom, yWeightBottom]]) {
-          const xsrc = (x + shift.getX(blockX, blockY) + width) % width;
-          const ysrc = (y + shift.getY(blockX, blockY) + height) % height;
-          const isrc = 4 * (width * ysrc + xsrc);
-          const idst = 4 * (width * y + x);
-          for (let di = 0; di < 3; di++) {
-            out.data[idst + di] += xWeight * yWeight * previous.data[isrc + di];
-          }
-        }
-      }
-    }
-  }
-
-  return out;
-};
-
 export const elementEvent = (element: HTMLElement, eventName: string) => new Promise((resolve) => {
   element.addEventListener(eventName, resolve, { once: true });
 });
@@ -183,9 +145,8 @@ export const getDimensions = async (segments: Segment[]): Promise<{width: number
   };
 };
 
-export const prepareGlideSegment = async (segment: GlideSegment, renderRoot: HTMLElement): Promise<PreparedGlideSegment> => {
+export const prepareGlideSegment = async (segment: GlideSegment): Promise<PreparedGlideSegment> => {
   const video = document.createElement('video');
-  renderRoot.append(video);
   video.src = segment.src;
   await elementEvent(video, 'canplaythrough');
 
@@ -193,7 +154,6 @@ export const prepareGlideSegment = async (segment: GlideSegment, renderRoot: HTM
   const height = video.videoHeight;
 
   const canvas = document.createElement('canvas');
-  renderRoot.append(canvas);
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
@@ -226,11 +186,9 @@ export const prepareGlideSegment = async (segment: GlideSegment, renderRoot: HTM
 
 export const prepareMovementSegment = async (
   segment: MovementSegment,
-  renderRoot: HTMLElement,
   onProgress?: (progress: number) => void,
 ): Promise<PreparedMovementSegment> => {
   const video = document.createElement('video');
-  renderRoot.append(video);
   video.src = segment.src;
   await elementEvent(video, 'canplaythrough');
 
@@ -238,7 +196,6 @@ export const prepareMovementSegment = async (
   const height = video.videoHeight;
 
   const canvas = document.createElement('canvas');
-  renderRoot.append(canvas);
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
@@ -268,12 +225,10 @@ export const prepareMovementSegment = async (
 export const runCopySegment = async (
   segment: PreparedCopySegment,
   ctx: CanvasRenderingContext2D,
-  renderRoot: HTMLElement,
   onProgress?: (progress: number) => void,
 ): Promise<void> => {
   const video = document.createElement('video');
   video.src = segment.src;
-  renderRoot.append(video);
   await elementEvent(video, 'canplaythrough');
   video.currentTime = segment.start;
   await elementEvent(video, 'seeked');
