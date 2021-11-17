@@ -1,12 +1,15 @@
 import { prepareGlideSegment, runGlideSegment } from './supermosh';
 
+const videoSrc = '/static/baby-m.webm';
+const images = '0.jpg 1.jpg 4.jpg 8.jpg 9.jpg chris-s-dog.jpg dead-roses.jpg hand.jpg heaven-knows-what.jpg hot-guy.jpg pale-creatures.jpg red-lips.jpg red-shoes.jpg renaissance.jpg robot.jpg @sanzlena.jpg sweater.jpg vampire-babe.jpg'.split(' ');
+const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
+
 (async () => {
   const video = document.createElement('video');
-  video.src = '/baby-05.webm';
+  video.src = videoSrc;
   await new Promise<any>((r) => { video.oncanplaythrough = r; });
 
   const canvas = document.createElement('canvas');
-  canvas.style.filter = 'saturate(0) contrast(2)';
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
 
@@ -15,24 +18,26 @@ import { prepareGlideSegment, runGlideSegment } from './supermosh';
   document.body.append(canvas);
 
   const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, video.videoWidth, video.videoHeight);
 
   const img = document.createElement('img');
-  img.src = `/static/${~~(Math.random() * 10)}.jpg`;
+  img.src = imgSrc;
   await new Promise<any>((r) => { img.onload = r; });
-  ctx.drawImage(img, 0, 0);
+  ctx.drawImage(img, video.videoWidth * 0.4, (video.videoHeight - img.height) / 2);
 
   const gradient = ctx.createRadialGradient(
-    video.videoWidth / 2, video.videoHeight / 2, 0,
-    video.videoWidth / 2, video.videoHeight / 2, video.videoHeight / 2,
+    video.videoWidth * 0.4, video.videoHeight / 2, 0,
+    video.videoWidth * 0.6, video.videoHeight / 2, video.videoHeight * 0.5,
   );
-  gradient.addColorStop(0, 'transparent');
-  gradient.addColorStop(0.2, 'transparent');
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(0.3, 'rgba(0,0,0,0.5)');
   gradient.addColorStop(1, 'black');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, video.videoWidth, video.videoHeight);
 
   await runGlideSegment(await prepareGlideSegment({
-    src: '/baby-05.webm',
+    src: videoSrc,
     transform: 'glide',
     time: Math.random() * video.duration,
     length: Math.random(),
@@ -49,8 +54,4 @@ import { prepareGlideSegment, runGlideSegment } from './supermosh';
     }
   }
   ctx.putImageData(imageData, 0, 0);
-
-  setTimeout(() => {
-    window.history.go(0);
-  }, 1000);
 })();
