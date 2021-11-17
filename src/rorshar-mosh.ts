@@ -1,4 +1,4 @@
-import { prepareGlideSegment, runGlideSegment } from '../supermosh';
+import { prepareGlideSegment, runGlideSegment } from './supermosh';
 
 (async () => {
   const video = document.createElement('video');
