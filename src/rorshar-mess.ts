@@ -13,31 +13,55 @@ const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-
-  document.body.style.overflow = 'hidden';
-  document.body.style.margin = '0';
-  document.body.append(canvas);
-
   const ctx = canvas.getContext('2d');
+
+  const mirrorCanvas = document.createElement('canvas');
+  mirrorCanvas.width = canvas.width;
+  mirrorCanvas.height = canvas.height;
+  const mirrorCtx = mirrorCanvas.getContext('2d');
+  document.body.append(mirrorCanvas);
+
+  const render = async () => {
+    mirrorCtx.drawImage(
+      canvas,
+      canvas.width / 2, 0, canvas.width / 2, canvas.height,
+      canvas.width / 2, 0, canvas.width / 2, canvas.height,
+    );
+    const id = mirrorCtx.getImageData(0, 0, canvas.width, canvas.height);
+    for (let x = 0; x < canvas.width; x++) {
+      for (let y = 0; y < canvas.height; y++) {
+        const il = 4 * (canvas.width * y + x);
+        const ir = 4 * (canvas.width * y + canvas.width - x - 1);
+        for (let c = 0; c < 3; c++) {
+          id.data[il + c] = id.data[ir + c];
+        }
+      }
+    }
+    mirrorCtx.putImageData(id, 0, 0);
+    await new Promise<any>((r) => requestAnimationFrame(r));
+  };
+
   ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, video.videoWidth, video.videoHeight);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  mirrorCtx.fillStyle = 'black';
+  mirrorCtx.fillRect(0, 0, canvas.width, canvas.height);
 
   const img = document.createElement('img');
   img.src = imgSrc;
   await new Promise<any>((r) => { img.onload = r; });
-  ctx.drawImage(img, video.videoWidth * 0.4, (video.videoHeight - img.height) / 2);
+  ctx.drawImage(img, canvas.width * 0.4, (canvas.height - img.height) / 2);
 
   const gradient = ctx.createRadialGradient(
-    video.videoWidth * 0.4, video.videoHeight / 2, 0,
-    video.videoWidth * 0.6, video.videoHeight / 2, video.videoHeight * 0.5,
+    canvas.width * 0.5, canvas.height / 2, 0,
+    canvas.width * 0.5, canvas.height / 2, canvas.height * 0.3,
   );
   gradient.addColorStop(0, 'rgba(0,0,0,0)');
-  gradient.addColorStop(0.3, 'rgba(0,0,0,0.5)');
+  gradient.addColorStop(0.9, 'rgba(0,0,0,0.5)');
   gradient.addColorStop(1, 'black');
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, video.videoWidth, video.videoHeight);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const imgImageData = ctx.getImageData(0, 0, video.videoWidth, video.videoHeight);
+  const imgImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
   const spiral = createSpiral({
     ctx,
@@ -46,37 +70,45 @@ const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
     kind: 'compressed',
     divider: 10,
     multiplier: 10,
-    quality: 21,
+    quality: 31,
     stopAt: 0.5,
   });
 
-  ctx.fillStyle = 'white';
-  for (let i = 0; i < 20000; i++) {
+  ctx.fillStyle = 'grey';
+  for (let i = 0; i < 100_000; i++) {
     ctx.fillRect(spiral.x, spiral.y, 1, 1);
     spiral.move();
-    if ((spiral.x - video.videoWidth / 2) ** 2 + (spiral.y - video.videoHeight / 2) ** 2 > 0.1 * video.videoWidth * video.videoHeight) {
-      spiral.x = ~~(video.videoWidth * (0.4 + 0.2 * Math.random()));
-      spiral.y = ~~(video.videoHeight * (0.4 + 0.2 * Math.random()));
-      await new Promise<any>((r) => requestAnimationFrame(r));
+    if ((spiral.x - canvas.width / 2) ** 2 + (spiral.y - canvas.height / 2) ** 2 > 0.2 * canvas.width * canvas.height) {
+      spiral.x = ~~(canvas.width * (0.3 + 0.4 * Math.random()));
+      spiral.y = ~~(canvas.height * (0.3 + 0.4 * Math.random()));
+      await render();
     }
   }
 
-  await runGlideSegment(await prepareGlideSegment({
+  const preparedGlideSegment = await prepareGlideSegment({
     src: videoSrc,
     transform: 'glide',
     time: Math.random() * video.duration,
     length: Math.random(),
-  }), ctx);
+  });
 
-  const imageData = ctx.getImageData(0, 0, video.videoWidth, video.videoHeight);
-  for (let x = 0; x < video.videoWidth / 2; x++) {
-    for (let y = 0; y < video.videoHeight; y++) {
-      const ileft = 4 * (video.videoWidth * y + x);
-      const iright = 4 * (video.videoWidth * y + (video.videoWidth - x - 1));
-      for (const c of [0, 1, 2]) {
-        imageData.data[ileft + c] = imageData.data[iright + c];
-      }
-    }
+  await runGlideSegment(preparedGlideSegment, ctx, render);
+
+  await render();
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const blurCanvas = document.createElement('canvas');
+  blurCanvas.width = canvas.width;
+  blurCanvas.height = canvas.height;
+  const blurCtx = blurCanvas.getContext('2d');
+  blurCtx.filter = 'blur(10px)';
+  blurCtx.putImageData(imageData, 0, 0);
+  blurCtx.drawImage(blurCanvas, 0, 0);
+  const idBlurred = blurCtx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < imageData.data.length; i++) {
+    imageData.data[i] += 0.5 * idBlurred.data[i];
   }
   ctx.putImageData(imageData, 0, 0);
+
+  await render();
 })();
