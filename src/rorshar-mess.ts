@@ -1,14 +1,33 @@
 import { prepareGlideSegment, runGlideSegment } from './supermosh';
 import createSpiral from './createSpiral';
 
+const spiralsSize = 0.5;
 const videoSrc = '/static/baby-m.webm';
 const images = '0.jpg 1.jpg 4.jpg 8.jpg 9.jpg chris-s-dog.jpg dead-roses.jpg hand.jpg heaven-knows-what.jpg hot-guy.jpg pale-creatures.jpg red-lips.jpg red-shoes.jpg renaissance.jpg robot.jpg @sanzlena.jpg sweater.jpg vampire-babe.jpg'.split(' ');
-const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
+
+const seed: string | null = '/static/robot.jpg 0.7650704776950114 0.45997997536658575';
+const { imgSrc, time, length } = seed ? ({
+  imgSrc: seed.split(' ')[0],
+  time: +seed.split(' ')[1],
+  length: +seed.split(' ')[2],
+}) : ({
+  imgSrc: `/static/${images[~~(Math.random() * images.length)]}`,
+  time: Math.random(),
+  length: Math.random(),
+});
+if (!seed) console.log([imgSrc, time, length].join(' '));
 
 (async () => {
   const video = document.createElement('video');
   video.src = videoSrc;
-  await new Promise<any>((r) => { video.oncanplaythrough = r; });
+  await new Promise<any>((r) => { video.oncanplay = r; });
+
+  const preparedGlideSegment = await prepareGlideSegment({
+    src: videoSrc,
+    transform: 'glide',
+    time: time * video.duration,
+    length,
+  });
 
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
@@ -59,6 +78,7 @@ const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
   gradient.addColorStop(1, 'black');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await render();
 
   const imgImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -73,27 +93,19 @@ const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
     stopAt: 0.5,
   });
 
-  ctx.fillStyle = 'grey';
-  for (let i = 0; i < 100_000; i++) {
+  ctx.fillStyle = '#aaa';
+  for (let i = 0; i < 50_000; i++) {
     ctx.fillRect(spiral.x, spiral.y, 1, 1);
     spiral.move();
-    if ((spiral.x - canvas.width / 2) ** 2 + (spiral.y - canvas.height / 2) ** 2 > 0.1 * canvas.width * canvas.height) {
-      spiral.x = ~~(canvas.width * (0.3 + 0.4 * Math.random()));
-      spiral.y = ~~(canvas.height * (0.3 + 0.4 * Math.random()));
-      await render();
-    }
+    if (spiral.x > canvas.width * (0.5 + 0.5 * spiralsSize)) spiral.x -= canvas.width * spiralsSize * 0.7;
+    if (spiral.x < canvas.width * (0.5 - 0.5 * spiralsSize)) spiral.x += canvas.width * spiralsSize * 0.7;
+    if (spiral.y > canvas.height * (0.5 + 0.5 * spiralsSize)) spiral.y -= canvas.height * spiralsSize * 0.7;
+    if (spiral.y < canvas.height * (0.5 - 0.5 * spiralsSize)) spiral.y += canvas.height * spiralsSize * 0.7;
+    if (spiral.done) break;
+    if (i % 1_000 === 0) await render();
   }
 
-  const preparedGlideSegment = await prepareGlideSegment({
-    src: videoSrc,
-    transform: 'glide',
-    time: Math.random() * video.duration,
-    length: Math.random(),
-  });
-
   await runGlideSegment(preparedGlideSegment, ctx, render);
-
-  await render();
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const blurCanvas = document.createElement('canvas');
