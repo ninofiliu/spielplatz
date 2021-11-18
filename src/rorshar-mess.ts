@@ -52,11 +52,10 @@ const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
   ctx.drawImage(img, canvas.width * 0.4, (canvas.height - img.height) / 2);
 
   const gradient = ctx.createRadialGradient(
-    canvas.width * 0.5, canvas.height / 2, 0,
-    canvas.width * 0.5, canvas.height / 2, canvas.height * 0.3,
+    canvas.width * 0.6, canvas.height / 2, 0,
+    canvas.width * 0.6, canvas.height / 2, canvas.height * 0.3,
   );
   gradient.addColorStop(0, 'rgba(0,0,0,0)');
-  gradient.addColorStop(0.9, 'rgba(0,0,0,0.5)');
   gradient.addColorStop(1, 'black');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -78,7 +77,7 @@ const imgSrc = `/static/${images[~~(Math.random() * images.length)]}`;
   for (let i = 0; i < 100_000; i++) {
     ctx.fillRect(spiral.x, spiral.y, 1, 1);
     spiral.move();
-    if ((spiral.x - canvas.width / 2) ** 2 + (spiral.y - canvas.height / 2) ** 2 > 0.2 * canvas.width * canvas.height) {
+    if ((spiral.x - canvas.width / 2) ** 2 + (spiral.y - canvas.height / 2) ** 2 > 0.1 * canvas.width * canvas.height) {
       spiral.x = ~~(canvas.width * (0.3 + 0.4 * Math.random()));
       spiral.y = ~~(canvas.height * (0.3 + 0.4 * Math.random()));
       await render();
