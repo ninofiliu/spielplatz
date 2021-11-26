@@ -1,11 +1,12 @@
 import { prepareGlideSegment, runGlideSegment } from './supermosh';
 import createSpiral from './createSpiral';
 
-const spiralsSize = 0.5;
+const spiralsSize = 0.8;
+const spiralLoop = 0.3;
 const videoSrc = '/static/baby-m.webm';
 const images = '0.jpg 1.jpg 4.jpg 8.jpg 9.jpg chris-s-dog.jpg dead-roses.jpg hand.jpg heaven-knows-what.jpg hot-guy.jpg pale-creatures.jpg red-lips.jpg red-shoes.jpg renaissance.jpg robot.jpg @sanzlena.jpg sweater.jpg vampire-babe.jpg'.split(' ');
 
-const seed: string | null = '/static/robot.jpg 0.7650704776950114 0.45997997536658575';
+const seed: string | null = null;
 const { imgSrc, time, length } = seed ? ({
   imgSrc: seed.split(' ')[0],
   time: +seed.split(' ')[1],
@@ -93,33 +94,33 @@ if (!seed) console.log([imgSrc, time, length].join(' '));
     stopAt: 0.5,
   });
 
-  ctx.fillStyle = '#aaa';
-  for (let i = 0; i < 50_000; i++) {
+  const stream = mirrorCanvas.captureStream();
+  const recorder = new MediaRecorder(stream);
+  recorder.addEventListener('dataavailable', (evt) => {
+    const out = document.createElement('video');
+    out.src = URL.createObjectURL(evt.data);
+    out.muted = true;
+    out.loop = true;
+    out.controls = true;
+    out.autoplay = true;
+    out.playbackRate = 2.0;
+    document.body.append(out);
+  });
+  recorder.start();
+
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i < 10_000; i++) {
     ctx.fillRect(spiral.x, spiral.y, 1, 1);
     spiral.move();
-    if (spiral.x > canvas.width * (0.5 + 0.5 * spiralsSize)) spiral.x -= canvas.width * spiralsSize * 0.7;
-    if (spiral.x < canvas.width * (0.5 - 0.5 * spiralsSize)) spiral.x += canvas.width * spiralsSize * 0.7;
-    if (spiral.y > canvas.height * (0.5 + 0.5 * spiralsSize)) spiral.y -= canvas.height * spiralsSize * 0.7;
-    if (spiral.y < canvas.height * (0.5 - 0.5 * spiralsSize)) spiral.y += canvas.height * spiralsSize * 0.7;
+    if (spiral.x > canvas.width * (0.5 + 0.5 * spiralsSize)) spiral.x = ~~(spiral.x - canvas.width * spiralsSize * spiralLoop);
+    if (spiral.x < canvas.width * (0.5 - 0.5 * spiralsSize)) spiral.x = ~~(spiral.x + canvas.width * spiralsSize * spiralLoop);
+    if (spiral.y > canvas.height * (0.5 + 0.5 * spiralsSize)) spiral.y = ~~(spiral.y - canvas.height * spiralsSize * spiralLoop);
+    if (spiral.y < canvas.height * (0.5 - 0.5 * spiralsSize)) spiral.y = ~~(spiral.y + canvas.height * spiralsSize * spiralLoop);
     if (spiral.done) break;
-    if (i % 1_000 === 0) await render();
+    if (i % 1000 === 0) await render();
   }
 
   await runGlideSegment(preparedGlideSegment, ctx, render);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const blurCanvas = document.createElement('canvas');
-  blurCanvas.width = canvas.width;
-  blurCanvas.height = canvas.height;
-  const blurCtx = blurCanvas.getContext('2d');
-  blurCtx.filter = 'blur(10px)';
-  blurCtx.putImageData(imageData, 0, 0);
-  blurCtx.drawImage(blurCanvas, 0, 0);
-  const idBlurred = blurCtx.getImageData(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < imageData.data.length; i++) {
-    imageData.data[i] += 0.5 * idBlurred.data[i];
-  }
-  ctx.putImageData(imageData, 0, 0);
-
-  await render();
+  recorder.stop();
 })();
