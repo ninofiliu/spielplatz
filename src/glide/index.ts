@@ -1,4 +1,4 @@
-import { approximateSmooth, getShift } from '../supermosh';
+import { approximate, getShift } from '../supermosh';
 
 (async () => {
   const video = document.createElement('video');
@@ -44,7 +44,7 @@ import { approximateSmooth, getShift } from '../supermosh';
     shifting = true;
     while (shifting) {
       const current = ctx.getImageData(0, 0, width, height);
-      const next = approximateSmooth(current, shift);
+      const next = approximate(current, shift);
       ctx.putImageData(next, 0, 0);
       await new Promise((r) => requestAnimationFrame(r));
     }
