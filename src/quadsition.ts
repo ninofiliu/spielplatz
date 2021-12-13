@@ -34,6 +34,19 @@ const loadData = (src: string, width: number, height: number) => new Promise<Ima
   img.src = src;
 });
 
+const loadRandom = (width: number, height: number): ImageData => {
+  const size = 100;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  for (let i = 0; i < 10; i++) {
+    ctx.fillStyle = `rgb(${100 * Math.random()}%,${20 * Math.random()}%,${100 * Math.random()}%)`;
+    ctx.fillRect(Math.random() * (width - size), Math.random() * (height - size), size, size);
+  }
+  return ctx.getImageData(0, 0, width, height);
+};
+
 const mixPoints = (pa: Point, pb: Point, t: number): Point => ({
   x: ~~(pa.x + t * (pb.x - pa.x)),
   y: ~~(pa.y + t * (pb.y - pa.y)),
@@ -88,18 +101,6 @@ const setMix = (srcId: ImageData, srcQuad: Quad, dstId: ImageData, dstQuad: Quad
     }
   }
 };
-
-// const getDiff = (srcId: ImageData, srcQuad: Quad, dstId: ImageData, dstQuad: Quad, xRes: number, yRes: number) => {
-//   for (let x = 0; x < xRes; x++) {
-//     for (let y = 0; y < yRes; y++) {
-//       const srcP = pointInQuad(srcQuad, x / xRes, y / yRes);
-//       const srcC = getColor(srcId, srcP);
-//       const dstP = pointInQuad(dstQuad, x / xRes, y / yRes);
-//       const dstC = getColor(dstId, dstP);
-//       return Math.abs(srcC.r - dstC.r) + Math.abs(srcC.g - dstC.g) + Math.abs(srcC.b - dstC.b);
-//     }
-//   }
-// };
 
 const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tLeft: number, tCenterX: number, tCenterY: number): Quad[] => {
   const p = {
@@ -158,8 +159,8 @@ const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tL
   document.body.append(canvas);
   const ctx = canvas.getContext('2d');
 
-  const srcId = await loadData('/static/selfies/0.webp', width, height);
-  const dstId = await loadData('/static/selfies/1.webp', width, height);
+  const srcId = loadRandom(width, height);
+  const dstId = loadRandom(width, height);
   const mixId = new ImageData(width, height);
   for (let ia = 3; ia < mixId.data.length; ia += 4) mixId.data[ia] = 255;
 
@@ -171,7 +172,7 @@ const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tL
   };
   let srcQuads: Quad[] = [fullQuad];
   let dstQuads: Quad[] = [fullQuad];
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 4; i++) {
     srcQuads = srcQuads.map((quad) => getSubQuads(
       quad,
       Math.random(),
@@ -191,6 +192,17 @@ const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tL
       Math.random(),
     )).flat();
   }
+
+  const stream = canvas.captureStream();
+  const recorder = new MediaRecorder(stream);
+  recorder.ondataavailable = (evt) => {
+    const url = URL.createObjectURL(evt.data);
+    console.log(url);
+  };
+  recorder.start();
+  setTimeout(() => {
+    recorder.stop();
+  }, 5000);
 
   let t = 0;
   const loop = () => {
