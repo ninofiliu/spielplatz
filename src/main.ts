@@ -1,1 +1,1 @@
-import './quadsition';
+import './gol';
