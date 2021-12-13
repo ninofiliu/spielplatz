@@ -16,36 +16,41 @@
   await new Promise((r) => { img.onload = r; });
   ctx.drawImage(img, 0, 0, width, height);
   const id = ctx.getImageData(0, 0, width, height);
+  for (let i = 0; i < 4 * width * height; i += 4) {
+    id.data[i + 1] = 0;
+    id.data[i + 2] = 0;
+  }
 
-  const world = new Uint8Array(width * height);
-  for (let i = 0; i < width * height; i++) world[i] = +(id.data[4 * i] > Math.random() * 256);
+  const [ar, br, cr, ak, bk, ck] = Array(6).fill(0).map(() => Math.random() * 0.5).sort();
 
   const loop = () => {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, width, height);
 
-    ctx.fillStyle = 'white';
-    let nbDiff = 0;
-    const clonedWorld = new Uint8Array(world);
+    const cidd = new Uint8ClampedArray(id.data);
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         let n = 0;
-        for (const dx of [-1, +1]) {
-          for (const dy of [-1, +1]) {
+        for (const dx of [-1, 0, 1]) {
+          for (const dy of [-1, 0, 1]) {
+            if (dx === 0 && dy === 0) continue;
             const nx = (x + dx) % width;
             const ny = (y + dy) % height;
-            if (clonedWorld[width * ny + nx])n++;
+            n += cidd[4 * (width * ny + nx)];
           }
         }
-        const i = width * y + x;
-        const before = world[i];
-        world[i] = +(world[i] ? (n === 2 || n === 3) : n === 3);
-        const after = world[i];
-        if (before !== after)nbDiff++;
-        if (world[i]) ctx.fillRect(x, y, 1, 1);
+        let w = id.data[4 * (width * y + x)] / 256;
+        const [a, b, c] = [
+          [ar, ak],
+          [br, bk],
+          [cr, ck],
+        ].map(([r, k]) => r + (k - r) * w);
+        n /= 255 * 8;
+        if (n < a) { w = 0; } else if (n < b) { w = (n - a) / (b - a); } else if (n < c) { w = (n - c) / (b - c); } else { w = 0; }
+        id.data[4 * (width * y + x)] = 256 * w;
       }
     }
-    if (nbDiff === 0) return;
+    ctx.putImageData(id, 0, 0);
     requestAnimationFrame(loop);
   };
   loop();
