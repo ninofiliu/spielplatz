@@ -1,7 +1,10 @@
 (async () => {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const scale = 3;
+  const width = ~~(window.innerWidth / scale);
+  const height = ~~(window.innerHeight / scale);
   const canvas = document.createElement('canvas');
+  canvas.style.transformOrigin = '0 0';
+  canvas.style.transform = `scale(${scale})`;
   canvas.width = width;
   canvas.height = height;
   document.body.style.imageRendering = 'pixelated';
@@ -21,7 +24,14 @@
     id.data[i + 2] = 0;
   }
 
-  const [ar, br, cr, ak, bk, ck] = Array(6).fill(0).map(() => Math.random() * 0.5).sort();
+  // const [ar, br, cr, ak, bk, ck] = Array(6).fill(0).map(() => Math.random() * 0.5).sort();
+  const [ar, br, cr] = [0.2, 0.4, 0.5];
+  const [ak, bk, ck] = [0, 0.15, 0.9];
+
+  let stopped = false;
+  canvas.addEventListener('click', () => {
+    stopped = true;
+  });
 
   const loop = () => {
     ctx.fillStyle = 'black';
@@ -50,6 +60,23 @@
         id.data[4 * (width * y + x)] = 256 * w;
       }
     }
+
+    if (stopped) {
+      for (let i = 0; i < id.data.length; i += 4) {
+        id.data[i + 1] = (
+          id.data[i - 4 * width]
+        - id.data[i + 4 * width]
+        + id.data[i - 4]
+        - id.data[i + 4]
+        ) / 2;
+      }
+      for (let i = 0; i < id.data.length; i += 4) {
+        id.data[i] = 0;
+      }
+      ctx.putImageData(id, 0, 0);
+      return;
+    }
+
     ctx.putImageData(id, 0, 0);
     requestAnimationFrame(loop);
   };
