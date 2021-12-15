@@ -1,1 +1,1 @@
-import './gol';
+import './arglsl';
