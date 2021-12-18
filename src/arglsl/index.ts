@@ -1,4 +1,4 @@
-import glsl from '../shared/glsl';
+import { webglSetup } from '../shared/webgl';
 
 (async () => {
   document.body.style.margin = '0';
@@ -11,7 +11,7 @@ import glsl from '../shared/glsl';
   canvas.height = height;
   document.body.append(canvas);
 
-  const gl = await glsl(
+  const { gl } = await webglSetup(
     canvas,
     new URL('./vertex.glsl', import.meta.url).href,
     new URL('./fragment.glsl', import.meta.url).href,

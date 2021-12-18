@@ -10,7 +10,7 @@ const createShader = async (gl: WebGL2RenderingContext, type: number, url: strin
   return shader;
 };
 
-export default async (canvas: HTMLCanvasElement, vertexUrl: string, fragmentUrl: string) => {
+export const webglSetup = async (canvas: HTMLCanvasElement, vertexUrl: string, fragmentUrl: string) => {
   const gl = canvas.getContext('webgl2');
   const vertexShader = await createShader(gl, gl.VERTEX_SHADER, vertexUrl);
   const fragmentShader = await createShader(gl, gl.FRAGMENT_SHADER, fragmentUrl);
@@ -34,5 +34,20 @@ export default async (canvas: HTMLCanvasElement, vertexUrl: string, fragmentUrl:
     -1, 1,
     1, 1,
   ]), gl.STATIC_DRAW);
-  return gl;
+  return { gl, program };
+};
+
+export const addTexture = (gl: WebGL2RenderingContext, nb: number, location: WebGLUniformLocation) => {
+  gl.activeTexture(gl.TEXTURE0 + nb);
+  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.uniform1i(location, nb);
+};
+
+export const setTextureImage = (gl: WebGL2RenderingContext, nb: number, source: ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement) => {
+  gl.activeTexture(gl.TEXTURE0 + nb);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
 };
