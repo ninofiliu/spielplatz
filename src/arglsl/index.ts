@@ -17,8 +17,16 @@ import glsl from '../shared/glsl';
     new URL('./fragment.glsl', import.meta.url).href,
   );
 
+  const ac = new AudioContext();
+  const analyser = ac.createAnalyser();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const source = ac.createMediaStreamSource(stream);
+  source.connect(analyser);
+
+  const data = new Uint8Array(analyser.frequencyBinCount);
   const loop = () => {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    analyser.getByteFrequencyData(data);
     requestAnimationFrame(loop);
   };
   loop();
