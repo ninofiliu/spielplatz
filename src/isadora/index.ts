@@ -27,6 +27,11 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
 };
 
 (async () => {
+  const offset = { x: 1.0, y: 1.0 };
+  const force = 0.5;
+  const blur = 50;
+  const t0 = performance.now();
+
   const width = window.innerWidth;
   const height = window.innerHeight;
   const canvas = document.createElement('canvas');
@@ -50,17 +55,20 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
       .filter((file) => file.startsWith('static/fairycore'))
       .map((file) => loadImage(file)),
   );
-
-  const offsetsImage = await loadImage(files[~~(Math.random() * files.length)]);
+  const offsetsImageDatas = await Promise.all(
+    files
+      .filter(() => Math.random() * files.length < 5)
+      .map(async (file) => {
+        const img = await loadImage(file);
+        const imageData = crop(img, width, height, blur);
+        return imageData;
+      }),
+  );
 
   addTexture(gl, 0, gl.getUniformLocation(program, 'u_image_0'));
   addTexture(gl, 1, gl.getUniformLocation(program, 'u_image_1'));
-  addTexture(gl, 2, gl.getUniformLocation(program, 'u_offsets'));
-
-  const offset = { x: 1.0, y: 1.0 };
-  const force = 0.5;
-  const blur = 30;
-  const t0 = performance.now();
+  addTexture(gl, 2, gl.getUniformLocation(program, 'u_offsets_0'));
+  addTexture(gl, 3, gl.getUniformLocation(program, 'u_offsets_1'));
 
   const loop = () => {
     const time = (performance.now() - t0) / 1000;
@@ -68,13 +76,20 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
     gl.uniform1f(gl.getUniformLocation(program, 'u_force'), force);
     gl.uniform1f(gl.getUniformLocation(program, 'u_time'), time);
 
-    const t = 0.2 * time;
-    setTextureImage(gl, 0, srcImages[~~t % srcImages.length]);
-    setTextureImage(gl, 1, srcImages[~~(t + 1) % srcImages.length]);
-    const mix = (t % 1) ** 4;
-    gl.uniform1f(gl.getUniformLocation(program, 'u_mix'), mix);
-    const offsetsImageData = crop(offsetsImage, width, height, blur);
-    setTextureImage(gl, 2, offsetsImageData);
+    {
+      const t = 0.2 * time;
+      setTextureImage(gl, 0, srcImages[~~t % srcImages.length]);
+      setTextureImage(gl, 1, srcImages[~~(t + 1) % srcImages.length]);
+      const mix = (t % 1) ** 4;
+      gl.uniform1f(gl.getUniformLocation(program, 'u_mix_src'), mix);
+    }
+    {
+      const t = 0.1 * time;
+      setTextureImage(gl, 2, offsetsImageDatas[~~t % offsetsImageDatas.length]);
+      setTextureImage(gl, 3, offsetsImageDatas[~~(t + 1) % offsetsImageDatas.length]);
+      const mix = 0.5 - 0.5 * Math.cos(Math.PI * (t % 1));
+      gl.uniform1f(gl.getUniformLocation(program, 'u_mix_dst'), mix);
+    }
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     requestAnimationFrame(loop);
