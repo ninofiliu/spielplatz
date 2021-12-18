@@ -1,4 +1,4 @@
-(async async async () => {
+(async () => {
   const CIRCLE_SHIFT = 50;
   const CIRCLE_SIZE = 50;
   const MARGIN = 50;
