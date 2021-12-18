@@ -42,36 +42,30 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
     new URL('./fragment.glsl', import.meta.url).href,
   );
 
-  const mouse = { x: 0, y: 0 };
-  document.addEventListener('mousemove', (evt) => {
-    mouse.x = -1 + 2 * evt.pageX / width;
-    mouse.y = 1 - 2 * evt.pageY / height;
-  });
+  const files = (await fetch(new URL('../files.txt', import.meta.url).href).then((resp) => resp.text()))
+    .split('\n')
+    .filter(Boolean);
+  const fairycoreFiles = files.filter((file) => file.startsWith('static/fairycore'));
 
-  const wheel = {
-    x: 0,
-    y: 0,
-  };
-  document.addEventListener('wheel', (evt) => {
-    wheel.x += evt.deltaX;
-    wheel.y += evt.deltaY;
-  });
-
-  const srcImage = await loadImage('/static/faces/1.jpg');
-  const offsetsImage = await loadImage('/static/faces/1.jpg');
+  const srcImage = await loadImage(fairycoreFiles[~~(Math.random() * fairycoreFiles.length)]);
+  const offsetsImage = await loadImage(files[~~(Math.random() * files.length)]);
 
   addTexture(gl, 0, gl.getUniformLocation(program, 'u_image'));
   const srcImageData = crop(srcImage, width, height, 0);
   setTextureImage(gl, 0, srcImageData);
   addTexture(gl, 1, gl.getUniformLocation(program, 'u_offsets'));
 
-  const start = performance.now();
-  const loop = () => {
-    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), performance.now() - start);
-    gl.uniform2f(gl.getUniformLocation(program, 'u_mouse'), mouse.x, mouse.y);
-    gl.uniform2f(gl.getUniformLocation(program, 'u_wheel'), wheel.x, wheel.y);
+  const offset = { x: 1.0, y: 1.0 };
+  const force = 0.5;
+  const blur = 20;
+  const t0 = performance.now();
 
-    const offsetsImageData = crop(offsetsImage, width, height, Math.max(0, wheel.x));
+  const loop = () => {
+    gl.uniform2f(gl.getUniformLocation(program, 'u_offset'), offset.x, offset.y);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_force'), force);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), (performance.now() - t0) / 1000);
+
+    const offsetsImageData = crop(offsetsImage, width, height, blur);
     setTextureImage(gl, 1, offsetsImageData);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
