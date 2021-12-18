@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "build": "echo public/static/**/*.* | fmt -w 1 | colrm 1 7 > src/files.txt",
     "dev": "snowpack dev"
   },
   "devDependencies": {

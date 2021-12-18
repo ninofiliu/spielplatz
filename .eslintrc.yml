@@ -9,6 +9,8 @@ parserOptions:
   sourceType: module
 plugins:
   - '@typescript-eslint'
+globals:
+  Deno: readonly
 rules:
   consistent-return: off
   default-case: off
