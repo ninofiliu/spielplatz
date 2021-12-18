@@ -45,28 +45,36 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   const files = (await fetch(new URL('../files.txt', import.meta.url).href).then((resp) => resp.text()))
     .split('\n')
     .filter(Boolean);
-  const fairycoreFiles = files.filter((file) => file.startsWith('static/fairycore'));
+  const srcImages = await Promise.all(
+    files
+      .filter((file) => file.startsWith('static/fairycore'))
+      .map((file) => loadImage(file)),
+  );
 
-  const srcImage = await loadImage(fairycoreFiles[~~(Math.random() * fairycoreFiles.length)]);
   const offsetsImage = await loadImage(files[~~(Math.random() * files.length)]);
 
-  addTexture(gl, 0, gl.getUniformLocation(program, 'u_image'));
-  const srcImageData = crop(srcImage, width, height, 0);
-  setTextureImage(gl, 0, srcImageData);
-  addTexture(gl, 1, gl.getUniformLocation(program, 'u_offsets'));
+  addTexture(gl, 0, gl.getUniformLocation(program, 'u_image_0'));
+  addTexture(gl, 1, gl.getUniformLocation(program, 'u_image_1'));
+  addTexture(gl, 2, gl.getUniformLocation(program, 'u_offsets'));
 
   const offset = { x: 1.0, y: 1.0 };
   const force = 0.5;
-  const blur = 20;
+  const blur = 30;
   const t0 = performance.now();
 
   const loop = () => {
+    const time = (performance.now() - t0) / 1000;
     gl.uniform2f(gl.getUniformLocation(program, 'u_offset'), offset.x, offset.y);
     gl.uniform1f(gl.getUniformLocation(program, 'u_force'), force);
-    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), (performance.now() - t0) / 1000);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), time);
 
+    const t = 0.2 * time;
+    setTextureImage(gl, 0, srcImages[~~t % srcImages.length]);
+    setTextureImage(gl, 1, srcImages[~~(t + 1) % srcImages.length]);
+    const mix = (t % 1) ** 4;
+    gl.uniform1f(gl.getUniformLocation(program, 'u_mix'), mix);
     const offsetsImageData = crop(offsetsImage, width, height, blur);
-    setTextureImage(gl, 1, offsetsImageData);
+    setTextureImage(gl, 2, offsetsImageData);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     requestAnimationFrame(loop);

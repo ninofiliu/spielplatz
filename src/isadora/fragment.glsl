@@ -1,6 +1,8 @@
 #version 300 es
 precision highp float;
-uniform sampler2D u_image;
+uniform sampler2D u_image_0;
+uniform sampler2D u_image_1;
+uniform float u_mix;
 uniform sampler2D u_offsets;
 uniform vec2 u_offset;
 uniform float u_force;
@@ -19,5 +21,9 @@ void main() {
     p.b + u_offset.y
   );
   vec2 tt = mod(t + u_force * offset, 1.0);
-  color = texture(u_image, tt);
+  color = mix(
+    texture(u_image_0, tt),
+    texture(u_image_1, tt),
+    u_mix
+  );
 }
