@@ -30,7 +30,7 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   const offset = { x: 1.0, y: 1.0 };
   const force = 0.5;
   const blur = 50;
-  const t0 = performance.now();
+  let step = 0;
 
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -55,7 +55,7 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
       .filter((file) => file.startsWith('static/fairycore'))
       .map((file) => loadImage(file)),
   );
-  const offsetsImageDatas = await Promise.all(
+  const dstIDs = await Promise.all(
     files
       .filter(() => Math.random() * files.length < 5)
       .map(async (file) => {
@@ -70,28 +70,39 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   addTexture(gl, 2, gl.getUniformLocation(program, 'u_offsets_0'));
   addTexture(gl, 3, gl.getUniformLocation(program, 'u_offsets_1'));
 
+  const maxSrcStep = 600;
+  let srcImage0 = srcImages[~~(Math.random() * srcImages.length)];
+  let srcImage1 = srcImages[~~(Math.random() * srcImages.length)];
+  const maxDstStep = 1000;
+  let dstID0 = dstIDs[~~(Math.random() * dstIDs.length)];
+  let dstID1 = dstIDs[~~(Math.random() * dstIDs.length)];
   const loop = () => {
-    const time = (performance.now() - t0) / 1000;
     gl.uniform2f(gl.getUniformLocation(program, 'u_offset'), offset.x, offset.y);
     gl.uniform1f(gl.getUniformLocation(program, 'u_force'), force);
-    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), time);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), step / 60);
 
-    {
-      const t = 0.2 * time;
-      setTextureImage(gl, 0, srcImages[~~t % srcImages.length]);
-      setTextureImage(gl, 1, srcImages[~~(t + 1) % srcImages.length]);
-      const mix = (t % 1) ** 4;
-      gl.uniform1f(gl.getUniformLocation(program, 'u_mix_src'), mix);
+    const srcStep = step % maxSrcStep;
+    if (srcStep === 0) {
+      srcImage0 = srcImage1;
+      srcImage1 = srcImages[~~(Math.random() * srcImages.length)];
+      setTextureImage(gl, 0, srcImage0);
+      setTextureImage(gl, 1, srcImage1);
     }
-    {
-      const t = 0.1 * time;
-      setTextureImage(gl, 2, offsetsImageDatas[~~t % offsetsImageDatas.length]);
-      setTextureImage(gl, 3, offsetsImageDatas[~~(t + 1) % offsetsImageDatas.length]);
-      const mix = 0.5 - 0.5 * Math.cos(Math.PI * (t % 1));
-      gl.uniform1f(gl.getUniformLocation(program, 'u_mix_dst'), mix);
+    const srcMix = (srcStep / maxSrcStep) ** 4;
+    gl.uniform1f(gl.getUniformLocation(program, 'u_mix_src'), srcMix);
+
+    const dstStep = step % maxDstStep;
+    if (dstStep === 0) {
+      dstID0 = dstID1;
+      dstID1 = dstIDs[~~(Math.random() * dstIDs.length)];
+      setTextureImage(gl, 2, dstID0);
+      setTextureImage(gl, 3, dstID1);
     }
+    const dstMix = 0.5 - 0.5 * Math.cos(Math.PI * (dstStep / maxDstStep));
+    gl.uniform1f(gl.getUniformLocation(program, 'u_mix_dst'), dstMix);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    step++;
     requestAnimationFrame(loop);
   };
   loop();
