@@ -28,8 +28,8 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
 
 (async () => {
   const offset = { x: 1.0, y: 1.0 };
-  const force = 0.5;
-  const blur = 50;
+  const force = 0.9;
+  const blur = 0;
   let step = 0;
 
   const width = window.innerWidth;
@@ -52,12 +52,12 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
     .filter(Boolean);
   const srcImages = await Promise.all(
     files
-      .filter((file) => file.startsWith('static/fairycore'))
+      .filter((file) => file.startsWith('static/greens'))
       .map((file) => loadImage(file)),
   );
   const dstIDs = await Promise.all(
     files
-      .filter(() => Math.random() * files.length < 5)
+      .filter((file) => file.startsWith('static/faces'))
       .map(async (file) => {
         const img = await loadImage(file);
         const imageData = crop(img, width, height, blur);
@@ -70,10 +70,10 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   addTexture(gl, 2, gl.getUniformLocation(program, 'u_offsets_0'));
   addTexture(gl, 3, gl.getUniformLocation(program, 'u_offsets_1'));
 
-  const maxSrcStep = 600;
+  const maxSrcStep = 400;
   let srcImage0 = srcImages[~~(Math.random() * srcImages.length)];
   let srcImage1 = srcImages[~~(Math.random() * srcImages.length)];
-  const maxDstStep = 1000;
+  const maxDstStep = 200;
   let dstID0 = dstIDs[~~(Math.random() * dstIDs.length)];
   let dstID1 = dstIDs[~~(Math.random() * dstIDs.length)];
   const loop = () => {
@@ -98,7 +98,7 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
       setTextureImage(gl, 2, dstID0);
       setTextureImage(gl, 3, dstID1);
     }
-    const dstMix = 0.5 - 0.5 * Math.cos(Math.PI * (dstStep / maxDstStep));
+    const dstMix = dstStep / maxDstStep;
     gl.uniform1f(gl.getUniformLocation(program, 'u_mix_dst'), dstMix);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);

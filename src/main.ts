@@ -1,1 +1,1 @@
-import './isadora';
+import './irsika';
