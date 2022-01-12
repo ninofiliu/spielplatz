@@ -32,5 +32,4 @@ void main() {
     texture(u_image_1, tt),
     u_mix_src
   );
-  color.rgb = color.gbr;
 }

@@ -28,7 +28,7 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
 
 (async () => {
   const offset = { x: 1.0, y: 1.0 };
-  const force = 0.7;
+  const force = 1.3;
   const blur = 0;
 
   const width = window.innerHeight;
@@ -36,10 +36,12 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
+  canvas.style.opacity = '0.9';
   canvas.style.position = 'fixed';
   canvas.style.transformOrigin = 'top left';
   canvas.style.transform = 'rotateY(180deg) rotate(90deg)';
   document.body.style.margin = '0';
+  document.body.style.backgroundColor = '#ff0044';
   document.body.append(canvas);
 
   const { gl, program } = await webglSetup(
@@ -73,11 +75,11 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
 
   let step = 0;
   let srcStep = 0;
-  const maxSrcStep = 400;
+  const maxSrcStep = 100;
   let srcImage0 = srcImages[~~(Math.random() * srcImages.length)];
   let srcImage1 = srcImages[~~(Math.random() * srcImages.length)];
   let dstStep = 0;
-  const maxDstStep = 200;
+  const maxDstStep = 60;
   let dstID0 = dstIDs[~~(Math.random() * dstIDs.length)];
   let dstID1 = dstIDs[~~(Math.random() * dstIDs.length)];
 

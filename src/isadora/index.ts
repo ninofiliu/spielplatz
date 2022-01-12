@@ -38,7 +38,9 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
   canvas.width = width;
   canvas.height = height;
   canvas.style.position = 'fixed';
+  canvas.style.opacity = '0.7';
   document.body.style.margin = '0';
+  document.body.style.backgroundColor = '#ff0000';
   document.body.append(canvas);
 
   const { gl, program } = await webglSetup(

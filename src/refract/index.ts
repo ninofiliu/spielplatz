@@ -57,8 +57,8 @@ const crop = (image: HTMLImageElement, width: number, height: number, blur: numb
     wheel.y += evt.deltaY;
   });
 
-  const srcImage = await loadImage('/static/faces/1.jpg');
-  const offsetsImage = await loadImage('/static/faces/1.jpg');
+  const srcImage = await loadImage('/static/mel0.jpg');
+  const offsetsImage = await loadImage('/static/eyes/2.jpg');
 
   addTexture(gl, 0, gl.getUniformLocation(program, 'u_image'));
   const srcImageData = crop(srcImage, width, height, 0);
