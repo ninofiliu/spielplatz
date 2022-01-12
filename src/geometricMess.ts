@@ -23,7 +23,7 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
       for (let i = 0; i < 3; i++) main[i] = randInt(50, 256);
       return Array(n).fill(null).map(() => {
         const variant = new Uint8Array(3);
-        for (let i = 0; i < 3; i++) variant[i] = main[i] + (-0.5 + Math.random()) * 5;
+        for (let i = 0; i < 3; i++) variant[i] = main[i] + (-0.5 + Math.random()) * 10;
         return variant;
       });
     })
@@ -191,6 +191,7 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
     createMarchStep,
     createImageStep,
     createImageStep,
+    createImageStep,
   ])();
   let step = getRandomStep();
   const loop = () => {
@@ -199,4 +200,14 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
     requestAnimationFrame(loop);
   };
   loop();
+
+  const recorder = new MediaRecorder(canvas.captureStream());
+  recorder.start();
+  recorder.addEventListener('dataavailable', (evt) => {
+    window.open(URL.createObjectURL(evt.data), '_blank');
+  });
+  document.addEventListener('keydown', (evt) => {
+    if (evt.key !== ' ') return;
+    recorder.stop();
+  });
 })();
