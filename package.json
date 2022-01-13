@@ -5,6 +5,9 @@
   },
   "devDependencies": {
     "@snowpack/plugin-typescript": "^1.2.1",
+    "@types/w3c-web-hid": "^1.0.2",
+    "@types/w3c-web-usb": "^1.0.5",
+    "@types/webmidi": "^2.0.6",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",

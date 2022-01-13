@@ -2,6 +2,9 @@ lockfileVersion: 5.3
 
 specifiers:
   '@snowpack/plugin-typescript': ^1.2.1
+  '@types/w3c-web-hid': ^1.0.2
+  '@types/w3c-web-usb': ^1.0.5
+  '@types/webmidi': ^2.0.6
   '@typescript-eslint/eslint-plugin': ^4.33.0
   '@typescript-eslint/parser': ^4.33.0
   eslint: ^7.32.0
@@ -12,6 +15,9 @@ specifiers:
 
 devDependencies:
   '@snowpack/plugin-typescript': 1.2.1_typescript@4.5.2
+  '@types/w3c-web-hid': 1.0.2
+  '@types/w3c-web-usb': 1.0.5
+  '@types/webmidi': 2.0.6
   '@typescript-eslint/eslint-plugin': 4.33.0_d00b196ac5df1286ea7e45797bebddbc
   '@typescript-eslint/parser': 4.33.0_eslint@7.32.0+typescript@4.5.2
   eslint: 7.32.0
@@ -371,6 +377,18 @@ packages:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
       '@types/node': 16.6.1
+    dev: true
+
+  /@types/w3c-web-hid/1.0.2:
+    resolution: {integrity: sha512-tNLnl6+/AkmASEnviwdLLE6kaXlY28cDVyQ3e+WwnEAm5DHyO7c71a5TtYX6ofrnzzdQSnNsjNMoggsbrtOYfQ==}
+    dev: true
+
+  /@types/w3c-web-usb/1.0.5:
+    resolution: {integrity: sha512-dYolx2XWesl1TMu+1BjtjU6eC6c2zZ2VDKhjU4f/mtR3+UBfMW6h1tPCQt7leY5Y8JBg0Fe/mMnoDMkPPNX9sw==}
+    dev: true
+
+  /@types/webmidi/2.0.6:
+    resolution: {integrity: sha512-sfS0A5IryqmBrUpcGPipEPeFdpqmZzP6b6lZFxHKgz5n2Vhzh4yJ5P2TvoDUhDjqJyv0Y25ng0Qodgo2Vu08ug==}
     dev: true
 
   /@typescript-eslint/eslint-plugin/4.33.0_d00b196ac5df1286ea7e45797bebddbc:
