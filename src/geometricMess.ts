@@ -14,20 +14,23 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
   document.body.append(canvas);
 
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'white';
+  ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, width, height);
 
-  const palette = [3, 2]
-    .flatMap((n) => {
-      const main = new Uint8Array(3);
-      for (let i = 0; i < 3; i++) main[i] = randInt(50, 256);
-      return Array(n).fill(null).map(() => {
-        const variant = new Uint8Array(3);
-        for (let i = 0; i < 3; i++) variant[i] = main[i] + (-0.5 + Math.random()) * 10;
-        return variant;
-      });
-    })
-    .map((arr) => `#${[...arr].map((n) => n.toString(16).padStart(2, '0')).join('')}`);
+  const palette = ['red', 'brown', 'skyblue', 'dimgrey'];
+  ctx.strokeStyle = 'white';
+
+  // const palette = [3, 2]
+  //   .flatMap((n) => {
+  //     const main = new Uint8Array(3);
+  //     for (let i = 0; i < 3; i++) main[i] = randInt(0, 256);
+  //     return Array(n).fill(null).map(() => {
+  //       const variant = new Uint8Array(3);
+  //       for (let i = 0; i < 3; i++) variant[i] = main[i] + (-0.5 + Math.random()) * 10;
+  //       return variant;
+  //     });
+  //   })
+  //   .map((arr) => `#${[...arr].map((n) => n.toString(16).padStart(2, '0')).join('')}`);
 
   const fetchIds = async () => {
     const resp = await fetch(new URL('./files.txt', import.meta.url).href);
@@ -80,8 +83,6 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
       const vx = ~~((-0.5 + Math.random()) * maxV);
       const vy = ~~((-0.5 + Math.random()) * maxV);
       const fillStyle = randPick(palette);
-      let strokeStyle = fillStyle;
-      while (strokeStyle === fillStyle) strokeStyle = randPick(palette);
 
       return {
         x,
@@ -91,7 +92,6 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
         vx,
         vy,
         fill: fillStyle,
-        stroke: strokeStyle,
       };
     });
 
@@ -99,7 +99,6 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
     return () => {
       const rect = rects[i % rects.length];
       ctx.fillStyle = rect.fill;
-      ctx.strokeStyle = rect.stroke;
       for (const dx of [-width, 0]) {
         for (const dy of [-height, 0]) {
           ctx.fillRect(rect.x + dx, rect.y + dy, rect.w, rect.h);
@@ -118,8 +117,6 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
 
     const radius = randInt(minRadius, maxRadius);
     const fillStyle = randPick(palette);
-    let strokeStyle = fillStyle;
-    while (strokeStyle === fillStyle) strokeStyle = randPick(palette);
 
     const vs = [
       { x: 0, y: -1 },
@@ -135,7 +132,6 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
 
     return () => {
       ctx.fillStyle = fillStyle;
-      ctx.strokeStyle = strokeStyle;
       for (const dx of [-width, 0, width]) {
         for (const dy of [-height, 0, height]) {
           ctx.beginPath();
@@ -152,46 +148,9 @@ const randPick = <T>(arr: T[]) => arr[randInt(0, arr.length)];
     };
   };
 
-  const createImageStep = () => {
-    const maxV = 20;
-
-    const id = randPick(ids);
-    const v = {
-      x: randInt(-maxV, maxV),
-      y: randInt(-maxV, maxV),
-    };
-    const p = {
-      x: randInt(0, width),
-      y: randInt(0, height),
-    };
-
-    let step = 0;
-    return () => {
-      const idCanvas = ctx.getImageData(p.x, p.y, id.width, id.height);
-      for (let x = 0; x < id.width; x++) {
-        for (let y = 0; y < id.height; y++) {
-          const j = 4 * (id.width * y + x);
-          for (let i = 0; i < 3; i++) {
-            idCanvas.data[j + i] = id.data[j + 3] === 0
-              ? idCanvas.data[j + i]
-              : (step % 2 === 0 ? 1 : 0.9) * id.data[j + i];
-          }
-        }
-      }
-      ctx.putImageData(idCanvas, p.x, p.y);
-      p.x = (p.x + v.x + width) % width;
-      p.y = (p.y + v.y + height) % height;
-      step++;
-    };
-  };
-
   const getRandomStep = () => randPick([
     createRectStep,
-    createRectStep,
     createMarchStep,
-    createImageStep,
-    createImageStep,
-    createImageStep,
   ])();
   let step = getRandomStep();
   const loop = () => {
