@@ -23,10 +23,37 @@ const linkAkai = async (akai: Akai) => {
   });
 };
 
-linkAkai({
-  noteOn(n, vel) { console.log('noteOn', n, vel); },
-  noteOff(n) { console.log('noteOff', n); },
-  padOn(n, vel) { console.log('padOn', n, vel); },
-  padOff(n) { console.log('padOff', n); },
-  knob(n, val) { console.log('knob', n, val); },
-});
+const clickMe = document.createElement('h1');
+clickMe.textContent = 'Click me';
+document.body.append(clickMe);
+
+document.addEventListener('click', () => {
+  clickMe.remove();
+
+  const ac = new AudioContext();
+  const notes = Array(128).fill(null).map((_, n) => {
+    const gain = ac.createGain();
+    gain.connect(ac.destination);
+    gain.gain.value = 0;
+
+    const osc = ac.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = 440 * 2 ** ((n - 69) / 12);
+    osc.start();
+    osc.connect(gain);
+
+    return { osc, gain };
+  });
+
+  linkAkai({
+    noteOn(n, vel) {
+      notes[n].gain.gain.value = vel;
+    },
+    noteOff(n) {
+      notes[n].gain.gain.value = 0;
+    },
+    padOn(n, vel) { console.log('padOn', n, vel); },
+    padOff(n) { console.log('padOff', n); },
+    knob(n, val) { console.log('knob', n, val); },
+  });
+}, { once: true });
