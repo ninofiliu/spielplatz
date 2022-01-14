@@ -30,6 +30,21 @@ document.body.append(clickMe);
 document.addEventListener('click', () => {
   clickMe.remove();
 
+  const canvas = document.createElement('canvas');
+  const dims = {
+    x: window.innerWidth,
+    y: window.innerHeight,
+  };
+  canvas.width = dims.x;
+  canvas.height = dims.y;
+  document.body.style.margin = '0';
+  document.body.style.overflow = 'hidden';
+  document.body.append(canvas);
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, dims.x, dims.y);
+
   const ac = new AudioContext();
   const notes = Array(128).fill(null).map((_, n) => {
     const gain = ac.createGain();
@@ -42,8 +57,23 @@ document.addEventListener('click', () => {
     osc.start();
     osc.connect(gain);
 
-    return { osc, gain };
+    return {
+      osc,
+      gain,
+      c: {
+        x: dims.x * (0.25 + 0.5 * Math.random()),
+        y: dims.y * (0.25 + 0.5 * Math.random()),
+      },
+      vt: 2 * Math.PI * Math.random(),
+    };
   });
+
+  const knobs = {
+    1: 1,
+    get radius() { return knobs[1]; },
+    2: 1,
+    get angle() { return knobs[2]; },
+  };
 
   linkAkai({
     noteOn(n, vel) {
@@ -54,6 +84,29 @@ document.addEventListener('click', () => {
     },
     padOn(n, vel) { console.log('padOn', n, vel); },
     padOff(n) { console.log('padOff', n); },
-    knob(n, val) { console.log('knob', n, val); },
+    knob(n, val) {
+      knobs[n] = val;
+    },
   });
+
+  const render = () => {
+    console.log(knobs.radius, knobs[1]);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, dims.x, dims.y);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 10;
+    for (const note of notes) {
+      ctx.beginPath();
+      ctx.arc(
+        note.c.x,
+        note.c.y,
+        500 * knobs.radius * note.gain.gain.value,
+        0,
+        2 * Math.PI * knobs.angle,
+      );
+      ctx.stroke();
+    }
+    requestAnimationFrame(render);
+  };
+  render();
 }, { once: true });
