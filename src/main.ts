@@ -1,1 +1,1 @@
-import './frontiers';
+import './frontiers/webcam';
