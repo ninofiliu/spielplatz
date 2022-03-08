@@ -1,1 +1,1 @@
-import './frontiers/webcam';
+import './shifts';
