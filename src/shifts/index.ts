@@ -1,6 +1,6 @@
 (async () => {
-  const size = 7;
-  const compr = 8;
+  const size = 20;
+  const compr = 1;
   const shouldRecord = false;
 
   const filesResp = await fetch(new URL('../files.txt', import.meta.url).href);
@@ -41,18 +41,26 @@
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         const i = 4 * (width * y + x);
-        const dx = -size + ~~(sid.data[i + 0] / 256 * (2 * size + 1));
-        const dy = -size + ~~(sid.data[i + 1] / 256 * (2 * size + 1));
-        const sx = (x + dx + width) % width;
-        const sy = (y + dy + height) % height;
-        const si = 4 * (width * sy + sx);
-        for (let d = 0; d < 4; d++) {
-          nid.data[i + d] = oid.data[si + d];
+        const dx = size * (-1 + 2 * sid.data[i + 0] / 256);
+        const dy = size * (-1 + 2 * sid.data[i + 1] / 256);
+        for (const fx of [0, 1]) {
+          for (const fy of [0, 1]) {
+            const sx = (x + ~~dx + fx + width) % width;
+            const sy = (y + ~~dy + fy + height) % height;
+            const si = 4 * (width * sy + sx);
+            let px = (dx + width) % 1;
+            if (fx) px = 1 - px;
+            let py = (dy + height) % 1;
+            if (fy) py = 1 - py;
+            for (let d = 0; d < 4; d++) {
+              nid.data[i + d] += oid.data[si + d] * px * py;
+            }
+          }
         }
       }
     }
     ctx.putImageData(nid, 0, 0);
-    setTimeout(animate, 200);
+    requestAnimationFrame(animate);
   };
   animate();
 
