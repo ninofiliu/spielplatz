@@ -1,5 +1,5 @@
 (async () => {
-  const size = 20;
+  const size = 7;
   const compr = 1;
   const shouldRecord = false;
 
@@ -19,50 +19,49 @@
   initImg.src = initSrc;
   await new Promise((r) => initImg.addEventListener('load', r, { once: true }));
 
-  const size = {
-    x: initImg.width,
-    y: initImg.height,
+  const dims = {
+    x: 500,
+    y: 500,
   };
   const canvas = document.createElement('canvas');
-  canvas.width = size.x;
-  canvas.height = size.y;
+  canvas.width = dims.x;
+  canvas.height = dims.y;
+  canvas.style.imageRendering = 'pixelated';
   document.body.append(canvas);
 
   const ctx = canvas.getContext('2d');
-  ctx.drawImage(warpImg, 0, 0, warpImg.width, warpImg.height, 0, 0, size.x, size.y);
-  const sid = ctx.getImageData(0, 0, size.x, size.y);
-  for (let i = 0; i < size.x * size.y; i += 4) {
+  ctx.drawImage(warpImg, 0, 0, warpImg.width, warpImg.height, 0, 0, dims.x, dims.y);
+  const warpId = ctx.getImageData(0, 0, dims.x, dims.y);
+  for (let i = 0; i < dims.x * dims.y; i += 4) {
     for (let d = 0; d < 3; d++) {
-      sid.data[i + d] = (~~sid.data[i + d] / compr) * compr;
+      warpId.data[i + d] = (~~warpId.data[i + d] / compr) * compr;
     }
   }
+  ctx.drawImage(initImg, 0, 0, initImg.width, initImg.height, 0, 0, dims.x, dims.y);
+  const initId = ctx.getImageData(0, 0, dims.x, dims.y);
 
-  ctx.drawImage(initImg, 0, 0);
+  const particles = Array(dims.x * dims.y).fill(null).map((_, i) => ({
+    x: i % dims.x,
+    y: ~~(i / dims.x),
+    fillStyle: `rgb(${initId.data[4 * i + 0]},${initId.data[4 * i + 1]},${initId.data[4 * i + 2]}`,
+  }));
+
+  const t0 = performance.now();
+  let step = 0;
   const animate = () => {
-    const oid = ctx.getImageData(0, 0, size.x, size.y);
-    const nid = new ImageData(size.x, size.y);
-    for (let x = 0; x < size.x; x++) {
-      for (let y = 0; y < size.y; y++) {
-        const i = 4 * (size.x * y + x);
-        const dx = size * (-1 + 2 * sid.data[i + 0] / 256);
-        const dy = size * (-1 + 2 * sid.data[i + 1] / 256);
-        for (const fx of [0, 1]) {
-          for (const fy of [0, 1]) {
-            const sx = (x + ~~dx + fx + size.x) % size.x;
-            const sy = (y + ~~dy + fy + size.y) % size.y;
-            const si = 4 * (size.x * sy + sx);
-            let px = (dx + size.x) % 1;
-            if (fx) px = 1 - px;
-            let py = (dy + size.y) % 1;
-            if (fy) py = 1 - py;
-            for (let d = 0; d < 4; d++) {
-              nid.data[i + d] += oid.data[si + d] * px * py;
-            }
-          }
-        }
-      }
+    step++;
+    const t1 = performance.now();
+    console.log(`${~~(1_000_000 * (t1 - t0) / (step * dims.x * dims.y))}ms/f/mp`);
+    ctx.globalAlpha = 0.03;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, dims.x, dims.y);
+    ctx.globalAlpha = 1;
+    for (const p of particles) {
+      ctx.fillStyle = p.fillStyle;
+      ctx.fillRect(p.x, p.y, 1, 1);
+      p.x = (p.x + size * (-1 + 2 * warpId.data[4 * (dims.y * ~~p.y + ~~p.x) + 0] / 256) + dims.x) % dims.x;
+      p.y = (p.y + size * (-1 + 2 * warpId.data[4 * (dims.y * ~~p.y + ~~p.x) + 1] / 256) + dims.y) % dims.y;
     }
-    ctx.putImageData(nid, 0, 0);
     requestAnimationFrame(animate);
   };
   animate();
