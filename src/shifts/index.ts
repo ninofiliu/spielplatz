@@ -1,5 +1,5 @@
 (async () => {
-  const size = 10;
+  const size = 3;
   const compr = 1;
   const shouldRecord = false;
 
@@ -55,6 +55,11 @@
     step++;
     const t1 = performance.now();
     console.log(`${~~(1_000_000 * (t1 - t0) / (step * dims.x * dims.y))}ms/f/mp`);
+    for (let i = 0; i < id.data.length; i += 4) {
+      for (const j of [0, 1, 2]) {
+        id.data[i + j] *= 0.95;
+      }
+    }
     for (const p of particles) {
       for (const i of [0, 1, 2]) {
         id.data[4 * (dims.x * ~~p.y + ~~p.x) + i] = p[i];
