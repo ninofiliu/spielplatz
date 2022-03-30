@@ -1,6 +1,7 @@
 (async () => {
-  const SIZE = 3;
-  const COMPR = 1;
+  const size = 7;
+  const compr = 8;
+  const shouldRecord = false;
 
   const filesResp = await fetch(new URL('../files.txt', import.meta.url).href);
   const filesTxt = await filesResp.text();
@@ -29,23 +30,9 @@
   const sid = ctx.getImageData(0, 0, width, height);
   for (let i = 0; i < width * height; i += 4) {
     for (let d = 0; d < 3; d++) {
-      sid.data[i + d] = (~~sid.data[i + d] / COMPR) * COMPR;
+      sid.data[i + d] = (~~sid.data[i + d] / compr) * compr;
     }
   }
-
-  const recorder = new MediaRecorder(canvas.captureStream());
-  recorder.addEventListener('dataavailable', (evt) => {
-    const url = URL.createObjectURL(evt.data);
-    const video = document.createElement('video');
-    video.src = url;
-    video.muted = true;
-    video.autoplay = true;
-    video.loop = true;
-    document.body.append(video);
-  });
-  canvas.addEventListener('click', () => {
-    recorder.stop();
-  });
 
   ctx.drawImage(oimg, 0, 0);
   const animate = () => {
@@ -54,8 +41,8 @@
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         const i = 4 * (width * y + x);
-        const dx = -SIZE + ~~(sid.data[i + 0] / 256 * (2 * SIZE + 1));
-        const dy = -SIZE + ~~(sid.data[i + 1] / 256 * (2 * SIZE + 1));
+        const dx = -size + ~~(sid.data[i + 0] / 256 * (2 * size + 1));
+        const dy = -size + ~~(sid.data[i + 1] / 256 * (2 * size + 1));
         const sx = (x + dx + width) % width;
         const sy = (y + dy + height) % height;
         const si = 4 * (width * sy + sx);
@@ -65,8 +52,30 @@
       }
     }
     ctx.putImageData(nid, 0, 0);
-    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(animate)));
+    setTimeout(animate, 200);
   };
-  recorder.start();
   animate();
+
+  if (shouldRecord) {
+    const recorder = new MediaRecorder(canvas.captureStream());
+    recorder.addEventListener('dataavailable', (evt) => {
+      const url = URL.createObjectURL(evt.data);
+      const video = document.createElement('video');
+      video.src = url;
+      video.muted = true;
+      video.autoplay = true;
+      video.loop = true;
+      document.body.append(video);
+    });
+    canvas.addEventListener('click', () => {
+      recorder.stop();
+    });
+    recorder.start();
+  }
+
+  document.addEventListener('keydown', (evt) => {
+    if (evt.key !== ' ') return;
+    const url = canvas.toDataURL();
+    window.open(url, '_blank');
+  });
 })();
