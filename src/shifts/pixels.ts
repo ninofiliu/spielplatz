@@ -1,19 +1,26 @@
 import init from './init';
 
 (async () => {
-  const size = 3;
-  const compr = 1;
+  const size = 2;
+  const compr = 128;
   const shouldRecord = false;
   const dims = {
-    x: 256,
-    y: 256,
+    x: 1080,
+    y: 1080,
   };
 
   const { ctx, initId } = await init(dims, compr, shouldRecord);
 
   ctx.putImageData(initId, 0, 0);
 
+  const t0 = performance.now();
+  let step = 0;
+
   const animate = () => {
+    step++;
+    const t1 = performance.now();
+    console.log(`${~~(1_000_000 * (t1 - t0) / (step * dims.x * dims.y))}ms/f/mp`);
+
     const oldId = ctx.getImageData(0, 0, dims.x, dims.y);
     const newId = new ImageData(dims.x, dims.y);
     for (let x = 0; x < dims.x; x++) {
@@ -30,7 +37,7 @@ import init from './init';
       }
     }
     ctx.putImageData(newId, 0, 0);
-    setTimeout(animate, 200);
+    requestAnimationFrame(animate);
   };
   animate();
 })();
