@@ -1,69 +1,78 @@
-type Vec2 = [number, number];
-
-type Tree = {
-  pos: Vec2;
-  vel: Vec2;
-  weight: number;
-  children: Tree[];
+type Cart = {
+  x: number;
+  y: number;
 };
 
-const dfs = (tree: Tree, cb: (walked: Tree) => void) => {
-  cb(tree);
-  for (const child of tree.children) {
-    dfs(child, cb);
-  }
+type Polar = {
+  r: number;
+  t: number;
 };
 
-const tree: Tree = {
-  pos: [0, 0],
-  vel: [0, 0],
-  weight: 1,
-  children: [
-    {
-      pos: [1, 0],
-      vel: [-1, 0],
-      weight: 1,
-      children: [],
-    },
-    {
-      pos: [2, 1],
-      vel: [-1, 0],
-      weight: 1,
-      children: [
-        {
-          pos: [3, 0],
-          vel: [-1, 0],
-          weight: 1,
-          children: [],
-        },
-      ],
-    },
-  ],
+type Leaf = {
+  pos: Cart;
+  vel: Polar;
+  children: Leaf[];
 };
 
-const dims: Vec2 = [window.innerWidth, window.innerHeight];
+const tortion = 2;
+
+const tree: Leaf[] = [
+  {
+    pos: { x: 0, y: 0 },
+    vel: { r: 1, t: Math.PI / 2 },
+    children: [],
+  },
+];
+
+const dims = { x: window.innerWidth, y: window.innerHeight };
 const canvas = document.createElement("canvas");
-canvas.width = dims[0];
-canvas.height = dims[1];
+canvas.width = dims.x;
+canvas.height = dims.y;
 document.body.style.margin = "0";
 document.body.style.overflow = "hidden";
 document.body.append(canvas);
 const ctx = canvas.getContext("2d");
 
-const canvasPos = (pos: Vec2) =>
-  pos.map((w, i) => dims[i] * (0.5 + 0.1 * w)) as Vec2;
+const canvasPos = (pos: Cart) =>
+  [0.5 * dims.x + 10 * pos.x, 0.5 * dims.y - 10 * pos.y] as const;
 
-ctx.lineWidth = 1;
-ctx.fillStyle = "black";
-ctx.fillRect(0, 0, dims[0], dims[1]);
-ctx.strokeStyle = "white";
-dfs(tree, (walked) => {
-  const from = canvasPos(walked.pos);
-  for (const child of walked.children) {
-    const to = canvasPos(child.pos);
-    ctx.moveTo(...from);
-    ctx.lineTo(...to);
+const addLeaves = (branch: Leaf, newLeaves: Leaf[]) => {
+  for (const newLeaf of newLeaves) {
+    branch.children.push(newLeaf);
+    tree.push(newLeaf);
+    ctx.moveTo(...canvasPos(branch.pos));
+    ctx.lineTo(...canvasPos(newLeaf.pos));
     ctx.stroke();
-    console.log(from, to);
   }
-});
+};
+
+{
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, dims[0], dims[1]);
+  ctx.strokeStyle = "white";
+
+  const animate = () => {
+    tree.forEach((leaf) => {
+      if (leaf.children.length) return;
+      if (Math.random() < 0.01) {
+      } else {
+        const newLeaf: Leaf = {
+          pos: {
+            x: leaf.pos.x + leaf.vel.r * Math.cos(leaf.vel.t),
+            y: leaf.pos.y + leaf.vel.r * Math.sin(leaf.vel.t),
+          },
+          vel: {
+            r: leaf.vel.r,
+            t: leaf.vel.t + tortion * (-0.5 + Math.random()),
+          },
+          children: [],
+        };
+        addLeaves(leaf, [newLeaf]);
+      }
+    });
+
+    requestAnimationFrame(animate);
+  };
+  animate();
+}
