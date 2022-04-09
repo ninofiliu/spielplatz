@@ -1,14 +1,14 @@
-document.body.style.margin = '0';
-document.body.style.overflow = 'hidden';
+document.body.style.margin = "0";
+document.body.style.overflow = "hidden";
 
 const width = window.innerWidth;
 const height = window.innerHeight;
-const canvas = document.createElement('canvas');
+const canvas = document.createElement("canvas");
 canvas.width = width;
 canvas.height = height;
 document.body.append(canvas);
 
-const gl = canvas.getContext('webgl2');
+const gl = canvas.getContext("webgl2");
 
 const createShader = async (type, url) => {
   const resp = await fetch(url);
@@ -23,8 +23,14 @@ const createShader = async (type, url) => {
 };
 
 const createProgram = async () => {
-  const vertexShader = await createShader(gl.VERTEX_SHADER, new URL('./vertex.glsl', import.meta.url));
-  const fragmentShader = await createShader(gl.FRAGMENT_SHADER, new URL('./fragment.glsl', import.meta.url));
+  const vertexShader = await createShader(
+    gl.VERTEX_SHADER,
+    new URL("./vertex.glsl", import.meta.url)
+  );
+  const fragmentShader = await createShader(
+    gl.FRAGMENT_SHADER,
+    new URL("./fragment.glsl", import.meta.url)
+  );
 
   const program = gl.createProgram();
   gl.attachShader(program, vertexShader);
@@ -39,28 +45,25 @@ const createProgram = async () => {
 
 (async () => {
   const mouse = { x: 0, y: 0 };
-  document.addEventListener('mousemove', (evt) => {
-    mouse.x = -1 + 2 * evt.pageX / window.innerWidth;
-    mouse.y = 1 - 2 * evt.pageY / window.innerHeight;
+  document.addEventListener("mousemove", (evt) => {
+    mouse.x = -1 + (2 * evt.pageX) / window.innerWidth;
+    mouse.y = 1 - (2 * evt.pageY) / window.innerHeight;
   });
   const program = await createProgram();
 
   const locations = {
-    a_position: gl.getAttribLocation(program, 'a_position'),
-    u_mouse: gl.getUniformLocation(program, 'u_mouse'),
-    u_now: gl.getUniformLocation(program, 'u_now'),
+    a_position: gl.getAttribLocation(program, "a_position"),
+    u_mouse: gl.getUniformLocation(program, "u_mouse"),
+    u_now: gl.getUniformLocation(program, "u_now"),
   };
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.enableVertexAttribArray(locations.a_position);
   gl.vertexAttribPointer(locations.a_position, 2, gl.FLOAT, false, 0, 0);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    -1, -1,
-    -1, 1,
-    1, -1,
-    1, -1,
-    -1, 1,
-    1, 1,
-  ]), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1]),
+    gl.STATIC_DRAW
+  );
 
   let nbFrame = 0;
   setInterval(() => {
@@ -79,19 +82,19 @@ const createProgram = async () => {
 
   const stream = canvas.captureStream();
   const recorder = new MediaRecorder(stream);
-  document.addEventListener('keypress', (evt) => {
-    if (evt.key !== 'r') return;
-    if (recorder.state === 'recording') {
+  document.addEventListener("keypress", (evt) => {
+    if (evt.key !== "r") return;
+    if (recorder.state === "recording") {
       recorder.stop();
     } else {
       recorder.start();
     }
   });
-  recorder.addEventListener('dataavailable', (evt) => {
+  recorder.addEventListener("dataavailable", (evt) => {
     const url = URL.createObjectURL(evt.data);
-    const video = document.createElement('video');
-    video.style.position = 'fixed';
-    video.style.inset = '0 0 0 0';
+    const video = document.createElement("video");
+    video.style.position = "fixed";
+    video.style.inset = "0 0 0 0";
     video.autoplay = true;
     video.muted = true;
     video.loop = true;

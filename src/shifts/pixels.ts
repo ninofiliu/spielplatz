@@ -1,4 +1,4 @@
-import init from './init';
+import init from "./init";
 
 (async () => {
   const size = 5;
@@ -19,15 +19,17 @@ import init from './init';
   const animate = async () => {
     step++;
     const t1 = performance.now();
-    console.log(`${~~(1_000_000 * (t1 - t0) / (step * dims.x * dims.y))}ms/f/mp`);
+    console.log(
+      `${~~((1_000_000 * (t1 - t0)) / (step * dims.x * dims.y))}ms/f/mp`
+    );
 
     const oldId = ctx.getImageData(0, 0, dims.x, dims.y);
     const newId = new ImageData(dims.x, dims.y);
     for (let x = 0; x < dims.x; x++) {
       for (let y = 0; y < dims.y; y++) {
         const i = 4 * (dims.x * y + x);
-        const dx = -size + ~~(warpId.data[i + 0] / 256 * (2 * size + 1));
-        const dy = -size + ~~(warpId.data[i + 1] / 256 * (2 * size + 1));
+        const dx = -size + ~~((warpId.data[i + 0] / 256) * (2 * size + 1));
+        const dy = -size + ~~((warpId.data[i + 1] / 256) * (2 * size + 1));
         const sx = (x + dx + dims.x) % dims.x;
         const sy = (y + dy + dims.y) % dims.y;
         const si = 4 * (dims.x * sy + sx);

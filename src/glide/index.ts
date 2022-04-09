@@ -1,12 +1,14 @@
-import { approximate, getShift } from '../supermosh';
+import { approximate, getShift } from "../supermosh";
 
 (async () => {
-  const video = document.createElement('video');
+  const video = document.createElement("video");
   video.muted = true;
   // video.autoplay = true;
 
-  video.src = '/baby-05.webm';
-  await new Promise((r) => video.addEventListener('canplaythrough', r, { once: true }));
+  video.src = "/baby-05.webm";
+  await new Promise((r) =>
+    video.addEventListener("canplaythrough", r, { once: true })
+  );
   const width = video.videoWidth;
   const height = video.videoHeight;
 
@@ -17,15 +19,15 @@ import { approximate, getShift } from '../supermosh';
   video.play();
   document.body.append(video);
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   let shifting = false;
-  document.addEventListener('keypress', async (evt) => {
+  document.addEventListener("keypress", async (evt) => {
     shifting = false;
-    if (evt.key !== ' ') return;
+    if (evt.key !== " ") return;
     ctx.drawImage(video, 0, 0);
     const before = ctx.getImageData(0, 0, width, height);
     let nbDiff = 0;

@@ -6,16 +6,16 @@
 
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
 
-  document.body.style.overflow = 'hidden';
-  document.body.style.margin = '0';
+  document.body.style.overflow = "hidden";
+  document.body.style.margin = "0";
   document.body.append(canvas);
 
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'black';
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "black";
   ctx.fillRect(0, 0, width, height);
 
   function* pixels() {
@@ -27,18 +27,35 @@
     }
   }
 
-  const rand = (from: number, to: number, min: number = -Infinity, max: number = Infinity) => Math.max(min, Math.min(max, from + (to - from) * Math.random()));
+  const rand = (
+    from: number,
+    to: number,
+    min: number = -Infinity,
+    max: number = Infinity
+  ) => Math.max(min, Math.min(max, from + (to - from) * Math.random()));
 
-  const circles = [{
-    x: width / 2,
-    y: height / 2,
-    r: rand(0, CIRCLE_SIZE),
-  }];
+  const circles = [
+    {
+      x: width / 2,
+      y: height / 2,
+      r: rand(0, CIRCLE_SIZE),
+    },
+  ];
   for (let i = 0; i < 200; i++) {
     const lastCircle = circles.slice(-1)[0];
     circles.push({
-      x: rand(lastCircle.x - CIRCLE_SHIFT, lastCircle.x + CIRCLE_SHIFT, MARGIN, width - MARGIN),
-      y: rand(lastCircle.y - CIRCLE_SHIFT, lastCircle.y + CIRCLE_SHIFT, MARGIN, height - MARGIN),
+      x: rand(
+        lastCircle.x - CIRCLE_SHIFT,
+        lastCircle.x + CIRCLE_SHIFT,
+        MARGIN,
+        width - MARGIN
+      ),
+      y: rand(
+        lastCircle.y - CIRCLE_SHIFT,
+        lastCircle.y + CIRCLE_SHIFT,
+        MARGIN,
+        height - MARGIN
+      ),
       r: rand(0, CIRCLE_SIZE),
     });
   }
@@ -54,9 +71,11 @@
       for (let x = minx; x < maxx; x++) {
         for (let y = miny; y < maxy; y++) {
           const i = 4 * (width * y + x);
-          const dist = Math.sqrt((x - circle.x) ** 2 + (y - circle.y) ** 2) / circle.r;
+          const dist =
+            Math.sqrt((x - circle.x) ** 2 + (y - circle.y) ** 2) / circle.r;
           for (const c of [0, 1, 2]) {
-            id.data[i + c] = (id.data[i + c] + 0.7 * Math.max(0, 255 * (1 - dist))) % 256;
+            id.data[i + c] =
+              (id.data[i + c] + 0.7 * Math.max(0, 255 * (1 - dist))) % 256;
           }
         }
       }
@@ -68,7 +87,7 @@
   };
 
   const lines = async () => {
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = "black";
     ctx.lineWidth = 0.1;
     for (let i = 0; i < circles.length - NB_LINES - 1; i++) {
       for (let j = i + 1; j < i + NB_LINES + 1; j++) {

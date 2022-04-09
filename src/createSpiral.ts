@@ -6,27 +6,28 @@ type SpiralParams = {
   stopAt: number;
 } & (
   | {
-    kind: 'basic';
-    /** between 0 and 1 */
-    treshold: number;
-  }
+      kind: "basic";
+      /** between 0 and 1 */
+      treshold: number;
+    }
   | {
-    kind: 'linear';
-    /** starting at 1 */
-    divider: number;
-  }
+      kind: "linear";
+      /** starting at 1 */
+      divider: number;
+    }
   | {
-    kind: 'looped';
-    /** starting at 1 */
-    divider: number;
-    /** starting at 1 */
-    multiplier: number;
-  } | {
-    kind: 'compressed';
-    divider: number;
-    multiplier: number;
-    quality: number;
-  }
+      kind: "looped";
+      /** starting at 1 */
+      divider: number;
+      /** starting at 1 */
+      multiplier: number;
+    }
+  | {
+      kind: "compressed";
+      divider: number;
+      multiplier: number;
+      quality: number;
+    }
 );
 
 export default (params: SpiralParams) => {
@@ -40,20 +41,30 @@ export default (params: SpiralParams) => {
 
   const stopFn = (() => {
     switch (params.kind) {
-      case 'basic': return (l: number) => l < params.treshold;
-      case 'linear': return (l: number, i: number) => l < (i / params.divider);
-      case 'looped': return (l: number, i: number) => ((l * params.multiplier) % 1) < (i / params.divider);
-      case 'compressed': return (l: number, i: number) => (((Math.floor(l * params.quality) / params.quality) * params.multiplier) % 1) < (i / params.divider);
+      case "basic":
+        return (l: number) => l < params.treshold;
+      case "linear":
+        return (l: number, i: number) => l < i / params.divider;
+      case "looped":
+        return (l: number, i: number) =>
+          (l * params.multiplier) % 1 < i / params.divider;
+      case "compressed":
+        return (l: number, i: number) =>
+          ((Math.floor(l * params.quality) / params.quality) *
+            params.multiplier) %
+            1 <
+          i / params.divider;
     }
   })();
 
-  const createMatrix = (fn) => (new Array(width)).fill(null).map((_, x) => (
-    (new Array(height)).fill(null).map((__, y) => (
-      fn(x, y)
-    ))
-  ));
+  const createMatrix = (fn) =>
+    new Array(width)
+      .fill(null)
+      .map((_, x) => new Array(height).fill(null).map((__, y) => fn(x, y)));
 
-  const src = createMatrix((x, y) => params.imageData.data[4 * (width * y + x) + params.channel] / 256);
+  const src = createMatrix(
+    (x, y) => params.imageData.data[4 * (width * y + x) + params.channel] / 256
+  );
   const drawn = createMatrix(() => false);
 
   const isInCanvas = ({ x, y }) => x >= 0 && x < width && y >= 0 && y < height;

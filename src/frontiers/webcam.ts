@@ -1,13 +1,13 @@
-const video = document.createElement('video');
-const inputCanvas = document.createElement('canvas');
-const inputCtx = inputCanvas.getContext('2d');
-const outputCanvas = document.createElement('canvas');
-const outputCtx = outputCanvas.getContext('2d');
-document.body.style.transform = 'scaleX(-1)';
-video.style.position = 'fixed';
+const video = document.createElement("video");
+const inputCanvas = document.createElement("canvas");
+const inputCtx = inputCanvas.getContext("2d");
+const outputCanvas = document.createElement("canvas");
+const outputCtx = outputCanvas.getContext("2d");
+document.body.style.transform = "scaleX(-1)";
+video.style.position = "fixed";
 document.body.append(video);
-outputCanvas.style.position = 'fixed';
-outputCanvas.style.opacity = '0.7';
+outputCanvas.style.position = "fixed";
+outputCanvas.style.opacity = "0.7";
 document.body.append(outputCanvas);
 let animate = () => {};
 
@@ -19,7 +19,9 @@ const play = async (nb: number, speed: number) => {
   video.autoplay = true;
   video.muted = true;
   video.srcObject = stream;
-  await new Promise((resolve) => video.addEventListener('canplay', resolve, { once: true }));
+  await new Promise((resolve) =>
+    video.addEventListener("canplay", resolve, { once: true })
+  );
   const width = video.videoWidth;
   const height = video.videoHeight;
   inputCanvas.width = width;
@@ -27,14 +29,18 @@ const play = async (nb: number, speed: number) => {
 
   outputCanvas.width = width;
   outputCanvas.height = height;
-  outputCtx.fillStyle = 'white';
+  outputCtx.fillStyle = "white";
   outputCtx.fillRect(0, 0, width, height);
-  outputCtx.fillStyle = `rgb(${~~(256 * Math.random())},${~~(256 * Math.random())},${~~(256 * Math.random())})`;
+  outputCtx.fillStyle = `rgb(${~~(256 * Math.random())},${~~(
+    256 * Math.random()
+  )},${~~(256 * Math.random())})`;
 
-  const ps = Array(nb).fill(null).map(() => ({
-    x: ~~((0.4 + 0.2 * Math.random()) * width),
-    y: ~~((0.4 + 0.2 * Math.random()) * height),
-  }));
+  const ps = Array(nb)
+    .fill(null)
+    .map(() => ({
+      x: ~~((0.4 + 0.2 * Math.random()) * width),
+      y: ~~((0.4 + 0.2 * Math.random()) * height),
+    }));
 
   animate = () => {
     inputCtx.drawImage(video, 0, 0);

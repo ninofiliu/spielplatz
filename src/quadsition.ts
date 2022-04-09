@@ -8,41 +8,47 @@ type Quad = {
   p0y: Point;
   px0: Point;
   pxy: Point;
-}
+};
 
 type Color = {
   r: number;
   g: number;
   b: number;
-}
+};
 
-const loadData = (src: string, width: number, height: number) => new Promise<ImageData>((resolve) => {
-  const img = document.createElement('img');
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(
-      img,
-      0, 0, img.width, img.height,
-      0, 0, width, height,
-    );
-    resolve(ctx.getImageData(0, 0, width, height));
-  };
-  img.onerror = (e) => { throw new Error(e instanceof Event ? e.type : e.toString()); };
-  img.src = src;
-});
+const loadData = (src: string, width: number, height: number) =>
+  new Promise<ImageData>((resolve) => {
+    const img = document.createElement("img");
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, width, height);
+      resolve(ctx.getImageData(0, 0, width, height));
+    };
+    img.onerror = (e) => {
+      throw new Error(e instanceof Event ? e.type : e.toString());
+    };
+    img.src = src;
+  });
 
 const loadRandom = (width: number, height: number): ImageData => {
   const size = 100;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   for (let i = 0; i < 10; i++) {
-    ctx.fillStyle = `rgb(${100 * Math.random()}%,${20 * Math.random()}%,${100 * Math.random()}%)`;
-    ctx.fillRect(Math.random() * (width - size), Math.random() * (height - size), size, size);
+    ctx.fillStyle = `rgb(${100 * Math.random()}%,${20 * Math.random()}%,${
+      100 * Math.random()
+    }%)`;
+    ctx.fillRect(
+      Math.random() * (width - size),
+      Math.random() * (height - size),
+      size,
+      size
+    );
   }
   return ctx.getImageData(0, 0, width, height);
 };
@@ -58,7 +64,8 @@ const pointInQuad = (quad: Quad, tx: number, ty: number): Point => {
   return mixPoints(pa, pb, ty);
 };
 
-const getI = (id: ImageData, p: Point): number => 4 * (id.width * ~~p.y + ~~p.x);
+const getI = (id: ImageData, p: Point): number =>
+  4 * (id.width * ~~p.y + ~~p.x);
 
 const getColor = (id: ImageData, p: Point): Color => {
   const i = getI(id, p);
@@ -88,7 +95,16 @@ const mixColors = (ca: Color, cb: Color, t: number): Color => ({
   b: ca.b + t * (cb.b - ca.b),
 });
 
-const setMix = (srcId: ImageData, srcQuad: Quad, dstId: ImageData, dstQuad: Quad, xRes: number, yRes: number, mixId: ImageData, t: number) => {
+const setMix = (
+  srcId: ImageData,
+  srcQuad: Quad,
+  dstId: ImageData,
+  dstQuad: Quad,
+  xRes: number,
+  yRes: number,
+  mixId: ImageData,
+  t: number
+) => {
   for (let x = 0; x < xRes; x++) {
     for (let y = 0; y < yRes; y++) {
       const srcP = pointInQuad(srcQuad, x / xRes, y / yRes);
@@ -102,7 +118,15 @@ const setMix = (srcId: ImageData, srcQuad: Quad, dstId: ImageData, dstQuad: Quad
   }
 };
 
-const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tLeft: number, tCenterX: number, tCenterY: number): Quad[] => {
+const getSubQuads = (
+  quad: Quad,
+  tTop: number,
+  tRight: number,
+  tDown: number,
+  tLeft: number,
+  tCenterX: number,
+  tCenterY: number
+): Quad[] => {
   const p = {
     x0: {
       y0: pointInQuad(quad, 0, 0),
@@ -151,13 +175,13 @@ const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tL
 (async () => {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  document.body.style.overflow = 'hidden';
-  document.body.style.margin = '0';
+  document.body.style.overflow = "hidden";
+  document.body.style.margin = "0";
   document.body.append(canvas);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   const srcId = loadRandom(width, height);
   const dstId = loadRandom(width, height);
@@ -173,24 +197,32 @@ const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tL
   let srcQuads: Quad[] = [fullQuad];
   let dstQuads: Quad[] = [fullQuad];
   for (let i = 0; i < 4; i++) {
-    srcQuads = srcQuads.map((quad) => getSubQuads(
-      quad,
-      Math.random(),
-      Math.random(),
-      Math.random(),
-      Math.random(),
-      Math.random(),
-      Math.random(),
-    )).flat();
-    dstQuads = dstQuads.map((quad) => getSubQuads(
-      quad,
-      Math.random(),
-      Math.random(),
-      Math.random(),
-      Math.random(),
-      Math.random(),
-      Math.random(),
-    )).flat();
+    srcQuads = srcQuads
+      .map((quad) =>
+        getSubQuads(
+          quad,
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random()
+        )
+      )
+      .flat();
+    dstQuads = dstQuads
+      .map((quad) =>
+        getSubQuads(
+          quad,
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random(),
+          Math.random()
+        )
+      )
+      .flat();
   }
 
   const stream = canvas.captureStream();
@@ -217,7 +249,7 @@ const getSubQuads = (quad: Quad, tTop: number, tRight: number, tDown: number, tL
         width / Math.sqrt(srcQuads.length),
         height / Math.sqrt(srcQuads.length),
         mixId,
-        0.5 + 0.5 * Math.sin(t / 10),
+        0.5 + 0.5 * Math.sin(t / 10)
       );
     }
     ctx.putImageData(mixId, 0, 0);
