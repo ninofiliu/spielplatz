@@ -85,10 +85,16 @@
         }
         p.x = Math.max(0, Math.min(dims.x - 1, p.x));
         p.y = Math.max(0, Math.min(dims.y - 1, p.y));
-        if (id.data[4 * (dims.x * p.y + p.x)]) particles.delete(p);
       }
     }
     requestAnimationFrame(animate);
   };
   animate();
+
+  const recorder = new MediaRecorder(canvas.captureStream());
+  recorder.addEventListener("dataavailable", (evt) => {
+    window.open(URL.createObjectURL(evt.data), "_blank");
+  });
+  recorder.start();
+  canvas.addEventListener("click", () => recorder.stop());
 }
