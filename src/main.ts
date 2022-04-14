@@ -1,1 +1,1 @@
-import "./trails";
+import "./tiles";
