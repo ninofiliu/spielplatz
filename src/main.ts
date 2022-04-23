@@ -1,1 +1,1 @@
-import "./tiles";
+import "./cam2sound";
