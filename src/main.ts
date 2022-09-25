@@ -1,1 +1,1 @@
-import "./cam2sound";
+import "./ghita";
