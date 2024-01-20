@@ -38,14 +38,14 @@ const crop = (
   const force = 1.3;
   const blur = 0;
 
-  const width = window.innerHeight;
-  const height = window.innerWidth;
+  const width = 540;
+  const height = 960;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  canvas.style.position = "fixed";
-  canvas.style.transformOrigin = "top left";
-  canvas.style.transform = "rotateY(180deg) rotate(90deg)";
+  // canvas.style.position = "fixed";
+  // canvas.style.transformOrigin = "top left";
+  // canvas.style.transform = "rotateY(180deg) rotate(90deg)";
   document.body.style.margin = "0";
   document.body.append(canvas);
 
@@ -84,11 +84,11 @@ const crop = (
 
   let step = 0;
   let srcStep = 0;
-  const maxSrcStep = 200;
+  const maxSrcStep = 450;
   let srcImage0 = srcImages[~~(Math.random() * srcImages.length)];
   let srcImage1 = srcImages[~~(Math.random() * srcImages.length)];
   let dstStep = 0;
-  const maxDstStep = 60;
+  const maxDstStep = 45;
   let dstID0 = dstIDs[~~(Math.random() * dstIDs.length)];
   let dstID1 = dstIDs[~~(Math.random() * dstIDs.length)];
 
@@ -136,4 +136,11 @@ const crop = (
     setNewSrc();
     setNewDst();
   });
+
+  const recorder = new MediaRecorder(canvas.captureStream());
+  recorder.addEventListener("dataavailable", (evt) =>
+    open(URL.createObjectURL(evt.data), "_blank")
+  );
+  recorder.start();
+  setTimeout(() => recorder.stop(), 5_000);
 })();

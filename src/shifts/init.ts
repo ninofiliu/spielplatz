@@ -13,11 +13,11 @@ export default async (
   warpImg.src = warpSrc;
   await new Promise((r) => warpImg.addEventListener("load", r, { once: true }));
 
-  const initSrc = files[~~(Math.random() * files.length)];
-  console.log(initSrc);
+  const initSrc = "/static/gnosis/cgi/4.png";
   const initImg = document.createElement("img");
   initImg.src = initSrc;
   await new Promise((r) => initImg.addEventListener("load", r, { once: true }));
+  console.log(initImg.width, initImg.height);
 
   const canvas = document.createElement("canvas");
   canvas.width = dims.x;

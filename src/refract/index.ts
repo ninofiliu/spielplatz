@@ -34,8 +34,8 @@ const crop = (
 };
 
 (async () => {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const width = 2541;
+  const height = 3812;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -61,11 +61,15 @@ const crop = (
   };
   document.addEventListener("wheel", (evt) => {
     wheel.x += evt.deltaX;
-    wheel.y += evt.deltaY;
+    wheel.y += 0.1 * evt.deltaY;
   });
 
-  const srcImage = await loadImage("/static/mel0.jpg");
-  const offsetsImage = await loadImage("/static/eyes/2.jpg");
+  const filesResp = await fetch(new URL("../files.txt", import.meta.url).href);
+  const filesTxt = await filesResp.text();
+  const files = await filesTxt.split("\n").filter(Boolean);
+
+  const srcImage = await loadImage("/gnosis/cgi/4bloom.png");
+  const offsetsImage = await loadImage(files[~~(Math.random() * files.length)]);
 
   addTexture(gl, 0, gl.getUniformLocation(program, "u_image"));
   const srcImageData = crop(srcImage, width, height, 0);
@@ -81,12 +85,7 @@ const crop = (
     gl.uniform2f(gl.getUniformLocation(program, "u_mouse"), mouse.x, mouse.y);
     gl.uniform2f(gl.getUniformLocation(program, "u_wheel"), wheel.x, wheel.y);
 
-    const offsetsImageData = crop(
-      offsetsImage,
-      width,
-      height,
-      Math.max(0, wheel.x)
-    );
+    const offsetsImageData = crop(offsetsImage, width, height, 0);
     setTextureImage(gl, 1, offsetsImageData);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);

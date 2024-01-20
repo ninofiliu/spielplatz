@@ -1,12 +1,12 @@
 import init from "./init";
 
 (async () => {
-  const size = 5;
+  const size = 10;
   const compr = 1;
   const shouldRecord = false;
   const dims = {
-    x: 1080,
-    y: 1080,
+    x: 2541,
+    y: 3812,
   };
 
   const { ctx, initId, warpId } = await init(dims, compr, shouldRecord);
@@ -39,7 +39,11 @@ import init from "./init";
       }
     }
     ctx.putImageData(newId, 0, 0);
-    requestAnimationFrame(animate);
+    // requestAnimationFrame(animate);
   };
-  animate();
+  document.addEventListener("keydown", (evt) => {
+    if (evt.key === "a") {
+      animate();
+    }
+  });
 })();
